@@ -1,67 +1,39 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <title>LIFF宿題管理</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-<style>
-body {
-  font-family: sans-serif;
-  text-align: center;
-  background: #f5f5f5;
-}
-h1 { font-size: 28px; }
-.box {
-  background: white;
-  margin: 20px auto;
-  padding: 20px;
-  width: 90%;
-  max-width: 420px;
-  border-radius: 12px;
-}
-button {
-  font-size: 18px;
-  padding: 12px;
-  width: 100%;
-  margin-top: 10px;
-}
-input, textarea, select {
-  font-size: 16px;
-  width: 100%;
-  padding: 10px;
-}
-</style>
 </head>
-
 <body>
-<h1>📘 LIFF宿題管理</h1>
 
-<div id="register" class="box">
-  <p>最初にユーザー登録をしてください</p>
-  <button onclick="register()">登録する</button>
+<div id="register" style="display:none">
+  <button onclick="register()">登録</button>
 </div>
 
-<div id="add" class="box" style="display:none">
-  <h2>宿題追加</h2>
-  <select id="subject">
-    <option>国語</option><option>数学</option><option>英語</option>
-    <option>理科</option><option>社会</option><option>その他</option>
-  </select>
-  <textarea id="content" placeholder="宿題内容"></textarea>
-  <input type="date" id="deadline">
+<div id="add" style="display:none">
+  <input id="content" placeholder="内容">
+  <input id="deadline" placeholder="期限">
   <button onclick="addHomework()">追加</button>
 </div>
 
-<div id="complete" class="box" style="display:none">
-  <h2>宿題完了登録</h2>
-  <textarea id="done" placeholder="完了した宿題（改行）"></textarea>
-  <button onclick="complete()">送信</button>
+<div id="complete" style="display:none">
+  <input id="row" placeholder="行番号">
+  <button onclick="completeHomework()">完了</button>
 </div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
 let userId = "";
+
+function show(id) {
+  document.querySelectorAll("div").forEach(d => d.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+function closeLater() {
+  setTimeout(() => liff.closeWindow(), 2000);
+}
 
 async function init() {
   await liff.init({ liffId: "2008725002-jHJsEKRx" });
@@ -77,54 +49,50 @@ async function init() {
 
   if (!json.registered) {
     show("register");
-  } else {
-    show(page);
+    return;
   }
-}
 
-function show(id) {
-  ["register","add","complete"].forEach(v=>{
-    document.getElementById(v).style.display="none";
-  });
-  document.getElementById(id).style.display="block";
+  show(page);
 }
 
 async function register() {
   await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({ type:"register", userId })
+    body: JSON.stringify({ type:"register", userId })
   });
-  alert("登録完了！");
-  show("add");
+  alert("登録完了");
+  closeLater();
 }
 
 async function addHomework() {
-  await fetch(GAS_URL,{
+  await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({
+    body: JSON.stringify({
       type:"addHomework",
-      subject:subject.value,
-      content:content.value,
-      deadline:deadline.value
+      userId,
+      content: content.value,
+      deadline: deadline.value
     })
   });
-  alert("追加しました！");
+  alert("追加完了");
+  closeLater();
 }
 
-async function complete() {
-  const list = done.value.split("\n").filter(v=>v);
-  await fetch(GAS_URL,{
+async function completeHomework() {
+  await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({
-      type:"complete",
+    body: JSON.stringify({
+      type:"completeHomework",
       userId,
-      done:list
+      row: row.value
     })
   });
-  alert("完了登録しました！");
+  alert("完了");
+  closeLater();
 }
 
 init();
 </script>
 </body>
 </html>
+
