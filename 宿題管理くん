@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LIFF 宿題管理</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { text-align:center; font-size:2em; margin-bottom:20px; }
+  .page { display:none; }
+  .active { display:block; }
+  button { width:100%; padding:10px; margin:5px 0; font-size:1em; }
+  input, select, textarea { width:100%; padding:10px; font-size:1em; margin-bottom:10px; }
+  #homework-list div { padding:5px; border:1px solid #ccc; margin-bottom:5px; border-radius:5px; background:#f9f9f9; }
+</style>
+</head>
+<body>
+<h1>LIFF 宿題管理</h1>
+
+<!-- ユーザー登録ページ -->
+<div id="register-page" class="page">
+  <p style="text-align:center;font-size:1.2em;">ユーザー登録を行います</p>
+  <button id="register-btn">登録する</button>
+</div>
+
+<!-- 宿題追加ページ -->
+<div id="add-page" class="page">
+  <p style="font-size:1.2em;">宿題を追加</p>
+  <label>教科</label>
+  <select id="subject-select">
+    <option value="国語">国語</option>
+    <option value="数学">数学</option>
+    <option value="社会">社会</option>
+    <option value="英語">英語</option>
+    <option value="理科">理科</option>
+    <option value="美術">美術</option>
+    <option value="音楽">音楽</option>
+    <option value="保体">保体</option>
+    <option value="その他">その他</option>
+  </select>
+  <label>内容</label>
+  <textarea id="homework-content" placeholder="内容を入力"></textarea>
+  <label>期限</label>
+  <input type="date" id="homework-deadline">
+  <button id="add-homework-btn">追加</button>
+</div>
+
+<!-- 宿題完了登録ページ -->
+<div id="complete-page" class="page">
+  <p style="font-size:1.2em;">完了した宿題を選択してください</p>
+  <div id="homework-list"></div>
+  <button id="complete-btn">完了登録</button>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec';
+const LIFF_ID = '2008725002-jHJsEKRx';
+let userId;
+
+async function initialize(){
+  await liff.init({liffId:LIFF_ID});
+  userId = liff.getContext().userId;
+  checkUser().then(showInitialPage);
+}
+
+// ユーザー登録済み確認
+async function checkUser(){
+  const res = await fetch(GAS_URL+'?type=checkUser&userId='+userId);
+  const json = await res.json();
+  return json.registered;
+}
+
+// ページ切替
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+}
+
+// 初期ページ切替
+async function showInitialPage(){
+  const registered = await checkUser();
+  const params = new URLSearchParams(window.location.search);
+  const page = params.get('page') || 'add';
+  if(!registered){ showPage('register-page'); }
+  else{
+    switch(page){
+      case 'register': showPage('add-page'); break;
+      case 'add': showPage('add-page'); break;
+      case 'complete': showPage('complete-page'); loadUncompleted(); break;
+      default: showPage('add-page');
+    }
+  }
+}
+
+// ユーザー登録
+document.getElementById('register-btn').addEventListener('click', async()=>{
+  const res = await fetch(GAS_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'register', userId})
+  });
+  const json = await res.json();
+  alert(json.message);
+  showPage('add-page');
+});
+
+// 宿題追加
+document.getElementById('add-homework-btn').addEventListener('click', async()=>{
+  const subject = document.getElementById('subject-select').value;
+  const content = document.getElementById('homework-content').value;
+  const deadline = document.getElementById('homework-deadline').value;
+  if(!content || !deadline){ alert('内容と期限を入力してください'); return; }
+
+  const res = await fetch(GAS_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'addHomework', userId, subject, content, deadline})
+  });
+  const json = await res.json();
+  alert('宿題を登録しました！');
+  document.getElementById('homework-content').value='';
+  document.getElementById('homework-deadline').value='';
+});
+
+// 宿題完了登録
+async function loadUncompleted(){
+  const res = await fetch(GAS_URL+'?type=getUncompleted&userId='+userId);
+  const tasks = await res.json();
+  const listDiv = document.getElementById('homework-list');
+  listDiv.innerHTML='';
+  tasks.forEach((t,i)=>{
+    const div = document.createElement('div');
+    div.innerHTML=`<input type="checkbox" id="chk-${i}" value="${t}"> ${t}`;
+    listDiv.appendChild(div);
+  });
+}
+
+document.getElementById('complete-btn').addEventListener('click', async()=>{
+  const checked = Array.from(document.querySelectorAll('#homework-list input[type=checkbox]:checked')).map(c=>c.value);
+  if(checked.length===0){ alert('1つ以上選択してください'); return; }
+  const total = document.querySelectorAll('#homework-list input').length;
+
+  const res = await fetch(GAS_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'complete', userId, done:checked, total})
+  });
+  const json = await res.json();
+  alert('完了登録しました！');
+  loadUncompleted();
+});
+
+initialize();
+</script>
+</body>
+</html>
