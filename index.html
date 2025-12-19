@@ -1,194 +1,35 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>LIFF宿題管理</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- LIFF SDK（eval 不使用・CSP OK） -->
+  <meta charset="utf-8">
+  <title>LIFF Debug</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 0;
-    }
-    .card {
-      max-width: 420px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-top: 14px;
-      font-weight: bold;
-      text-align: left;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      font-size: 16px;
-    }
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 14px;
-      font-size: 18px;
-      background: #06c755;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .msg {
-      margin-top: 20px;
-      font-size: 16px;
-    }
-  </style>
 </head>
-
 <body>
-<div class="card">
-  <h1 id="title">読み込み中…</h1>
-  <div id="content"></div>
-  <div class="msg" id="msg"></div>
-</div>
+  <h1 id="msg">読み込み中...</h1>
 
-<script>
-/* ================= 設定 ================= */
-const LIFF_ID = "2008725002-jHJsEKRx";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
+  <script>
+    window.onload = async () => {
+      if (!window.liff) {
+        document.getElementById("msg").innerText = "LIFF SDKが読み込まれていません";
+        return;
+      }
 
-/* ================= 共通 ================= */
-function qs(name) {
-  return new URLSearchParams(location.search).get(name);
-}
+      try {
+        await liff.init({ liffId: "2008725002-jHJsEKRx" });
 
-function closeLater() {
-  setTimeout(() => liff.closeWindow(), 2000);
-}
+        if (!liff.isInClient()) {
+          document.getElementById("msg").innerText = "LINEアプリで開いてください";
+          return;
+        }
 
-/* ================= 初期化 ================= */
-liff.init({ liffId: LIFF_ID }).then(async () => {
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
-
-  const profile = await liff.getProfile();
-  const userId = profile.userId;
-  const page = qs("page") || "register";
-
-  // 登録確認
-  const regRes = await fetch(GAS_URL, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ action: "checkUser", userId })
-  }).then(r => r.json());
-
-  if (!regRes.registered && page !== "register") {
-    renderRegister(userId);
-    return;
-  }
-
-  switch (page) {
-    case "register": renderRegister(userId); break;
-    case "add": renderAdd(userId); break;
-    case "done": renderDone(userId); break;
-    default: document.getElementById("title").innerText = "不明なページ";
-  }
-
-}).catch(err => {
-  document.getElementById("msg").innerText = "LIFF初期化失敗";
-  console.error(err);
-});
-
-/* ================= 画面 ================= */
-
-function renderRegister(userId) {
-  title.innerText = "ユーザー登録";
-  content.innerHTML = `
-    <button id="regBtn">登録する</button>
-  `;
-  regBtn.onclick = async () => {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ action: "register", userId })
-    });
-    msg.innerText = "登録完了！";
-    closeLater();
-  };
-}
-
-function renderAdd(userId) {
-  title.innerText = "宿題追加";
-  content.innerHTML = `
-    <label>教科</label>
-    <select id="subject">
-      <option>国語</option><option>数学</option><option>英語</option>
-      <option>理科</option><option>社会</option>
-      <option>美術</option><option>音楽</option><option>その他</option>
-    </select>
-
-    <label>内容</label>
-    <input id="contentText">
-
-    <label>期限</label>
-    <input type="date" id="deadline">
-
-    <button id="addBtn">追加</button>
-  `;
-  addBtn.onclick = async () => {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        action: "addHomework",
-        userId,
-        subject: subject.value,
-        content: contentText.value,
-        deadline: deadline.value
-      })
-    });
-    msg.innerText = "追加しました！";
-    closeLater();
-  };
-}
-
-function renderDone(userId) {
-  title.innerText = "宿題完了";
-  content.innerHTML = `
-    <label>宿題ID</label>
-    <input id="hwid">
-    <button id="doneBtn">完了</button>
-  `;
-  doneBtn.onclick = async () => {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        action: "doneHomework",
-        userId,
-        homeworkId: hwid.value
-      })
-    });
-    msg.innerText = "完了登録しました！";
-    closeLater();
-  };
-}
-</script>
+        document.getElementById("msg").innerText = "LIFF初期化成功";
+      } catch (e) {
+        document.getElementById("msg").innerText = "LIFF初期化失敗";
+        console.error(e);
+      }
+    };
+  </script>
 </body>
 </html>
 
