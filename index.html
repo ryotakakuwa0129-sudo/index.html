@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LIFF宿題管理</title>
 
   <!-- LIFF SDK -->
@@ -10,86 +9,102 @@
 
   <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      font-family: system-ui, sans-serif;
       background: #f5f7fb;
       margin: 0;
       padding: 0;
+    }
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 20px;
       text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
     }
     .card {
       background: #fff;
-      margin: 20px auto;
+      border-radius: 12px;
       padding: 20px;
-      max-width: 420px;
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
     }
-    h1 { font-size: 22px; margin-bottom: 10px; }
-    h2 { font-size: 18px; margin-top: 0; }
     label {
       display: block;
       margin-top: 12px;
       font-weight: bold;
+      text-align: left;
     }
-    input, select, button {
+    input, textarea, select {
       width: 100%;
       padding: 10px;
       margin-top: 6px;
-      font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      font-size: 16px;
     }
     button {
-      background: #06c755;
-      color: #fff;
-      border: none;
+      width: 100%;
       margin-top: 16px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #4f46e5;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
     }
     button.secondary {
-      background: #4a6cff;
+      background: #16a34a;
     }
-    .hidden { display: none; }
-    .loading {
-      margin-top: 40px;
-      font-size: 18px;
+    .hidden {
+      display: none;
+    }
+    .status {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #555;
     }
   </style>
 </head>
 
 <body>
+<div class="container">
+  <h1>📘 宿題管理</h1>
 
-<div id="loading" class="loading">読み込み中…</div>
+  <!-- ユーザー登録 -->
+  <div id="registerCard" class="card hidden">
+    <p>最初にユーザー登録を行います。</p>
+    <button id="registerBtn">ユーザー登録</button>
+  </div>
 
-<!-- ユーザー登録 -->
-<div id="register" class="card hidden">
-  <h1>ユーザー登録</h1>
-  <p>最初に登録してください</p>
-  <button id="registerBtn">登録する</button>
-</div>
+  <!-- 宿題追加 -->
+  <div id="addCard" class="card hidden">
+    <label for="subject">教科</label>
+    <select id="subject" name="subject">
+      <option value="国語">国語</option>
+      <option value="数学">数学</option>
+      <option value="英語">英語</option>
+      <option value="理科">理科</option>
+      <option value="社会">社会</option>
+      <option value="美術">美術</option>
+      <option value="音楽">音楽</option>
+      <option value="その他">その他</option>
+    </select>
 
-<!-- 宿題追加 -->
-<div id="addHomework" class="card hidden">
-  <h2>宿題追加</h2>
+    <label for="content">宿題内容</label>
+    <textarea id="content" name="content" rows="4"></textarea>
 
-  <label for="subject">教科</label>
-  <select id="subject" name="subject">
-    <option value="国語">国語</option>
-    <option value="数学">数学</option>
-    <option value="英語">英語</option>
-    <option value="理科">理科</option>
-    <option value="社会">社会</option>
-    <option value="美術">美術</option>
-    <option value="音楽">音楽</option>
-    <option value="その他">その他</option>
-  </select>
+    <label for="deadline">期限</label>
+    <input type="date" id="deadline" name="deadline">
 
-  <label for="content">内容</label>
-  <input id="content" name="content" type="text" placeholder="例：ワークP12-13">
+    <button id="addBtn" class="secondary">宿題を追加</button>
+  </div>
 
-  <label for="deadline">期限</label>
-  <input id="deadline" name="deadline" type="date">
-
-  <button id="addBtn">追加する</button>
+  <div id="status" class="status">読み込み中…</div>
 </div>
 
 <script>
@@ -97,59 +112,62 @@
 const LIFF_ID = "2008725002-jHJsEKRx";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
 
+/* ===== 変数 ===== */
+let userId = null;
+
 /* ===== 初期化 ===== */
-document.addEventListener("DOMContentLoaded", () => {
-  liff.init({ liffId: LIFF_ID })
-    .then(initApp)
-    .catch(err => alert("LIFF初期化失敗：" + err));
-});
-
-async function initApp() {
-  const profile = await liff.getProfile();
-  const userId = profile.userId;
-
-  const res = await postToGAS({
-    action: "checkUser",
-    userId
-  });
-
-  document.getElementById("loading").classList.add("hidden");
-
-  if (!res.registered) {
-    show("register");
-    document.getElementById("registerBtn").onclick = () => register(userId);
-  } else {
-    show("addHomework");
-    document.getElementById("addBtn").onclick = () => addHomework(userId);
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+    userId = liff.getContext().userId;
+    checkUser();
+  } catch (e) {
+    document.getElementById("status").textContent = "LIFF初期化失敗";
   }
 }
 
-/* ===== 表示制御 ===== */
-function show(id) {
-  document.querySelectorAll(".card").forEach(el => el.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-}
-
-/* ===== GAS通信 ===== */
-function postToGAS(data) {
-  return fetch(GAS_URL, {
+/* ===== ユーザー確認 ===== */
+async function checkUser() {
+  const res = await fetch(GAS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  }).then(r => r.json());
+    body: JSON.stringify({
+      action: "checkUser",
+      userId: userId
+    })
+  });
+  const data = await res.json();
+
+  document.getElementById("status").textContent = "";
+
+  if (data.registered) {
+    document.getElementById("addCard").classList.remove("hidden");
+  } else {
+    document.getElementById("registerCard").classList.remove("hidden");
+  }
 }
 
-/* ===== 登録 ===== */
-function register(userId) {
-  postToGAS({ action: "register", userId })
-    .then(() => {
-      alert("登録完了！");
-      liff.closeWindow();
-    });
-}
+/* ===== ユーザー登録 ===== */
+document.getElementById("registerBtn").addEventListener("click", async () => {
+  document.getElementById("status").textContent = "登録中…";
+  await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "register",
+      userId: userId
+    })
+  });
+  document.getElementById("status").textContent = "登録完了！";
+  setTimeout(() => liff.closeWindow(), 2000);
+});
 
 /* ===== 宿題追加 ===== */
-function addHomework(userId) {
+document.getElementById("addBtn").addEventListener("click", async () => {
   const subject = document.getElementById("subject").value;
   const content = document.getElementById("content").value;
   const deadline = document.getElementById("deadline").value;
@@ -159,19 +177,27 @@ function addHomework(userId) {
     return;
   }
 
-  postToGAS({
-    action: "addHomework",
-    userId,
-    subject,
-    content,
-    deadline
-  }).then(() => {
-    alert("追加しました！");
-    liff.closeWindow();
-  });
-}
-</script>
+  document.getElementById("status").textContent = "送信中…";
 
+  await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "addHomework",
+      userId,
+      subject,
+      content,
+      deadline
+    })
+  });
+
+  document.getElementById("status").textContent = "宿題を追加しました！";
+  setTimeout(() => liff.closeWindow(), 2000);
+});
+
+/* ===== 起動 ===== */
+init();
+</script>
 </body>
 </html>
 
