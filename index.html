@@ -2,191 +2,185 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<title>宿題管理LIFF</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>宿題管理 LIFF</title>
-
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
-body {
-  font-family: system-ui;
-  background: #f5f6f8;
-  padding: 16px;
-}
-.card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
+body { font-family: sans-serif; padding: 16px; }
+h2 { margin-top: 0; }
+button { width: 100%; padding: 12px; margin: 6px 0; }
 .hidden { display: none; }
-button {
-  width: 100%;
-  padding: 12px;
-  background: #06c755;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-select, input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-}
-.checkbox {
-  display: flex;
-  align-items: center;
-  margin-top: 6px;
-}
+.task { border-bottom: 1px solid #ccc; padding: 8px 0; }
 </style>
 </head>
 
 <body>
 
-<!-- ユーザー登録 -->
-<div id="registerCard" class="card hidden">
-  <h2>👤 ユーザー登録</h2>
-  <button onclick="register()">登録する</button>
+<!-- ===== ローディング ===== -->
+<div id="loading">読み込み中...</div>
+
+<!-- ===== 登録 ===== -->
+<div id="register" class="hidden">
+  <h2>ユーザー登録</h2>
+  <input id="userName" placeholder="名前">
+  <button onclick="registerUser()">登録</button>
 </div>
 
-<!-- 宿題追加 -->
-<div id="addCard" class="card hidden">
-  <h2>📘 宿題追加</h2>
+<!-- ===== メニュー ===== -->
+<div id="menu" class="hidden">
+  <h2>メニュー</h2>
+  <button onclick="showAdd()">宿題を追加</button>
+  <button onclick="showComplete()">宿題を完了</button>
+</div>
 
-  <select id="subject">
-    <option value="">教科を選択</option>
-    <option>国語</option>
-    <option>英語</option>
-    <option>社会</option>
-    <option>数学</option>
-    <option>理科</option>
-    <option>保体</option>
-    <option>美術</option>
-    <option>音楽</option>
-    <option>その他</option>
-  </select>
+<!-- ===== 追加 ===== -->
+<div id="add" class="hidden">
+  <h2>宿題追加</h2>
 
-  <input id="text" placeholder="宿題内容">
-  <input id="date" type="date">
+  <div>
+    <strong>教科（1つ選択）</strong><br>
+    <label><input type="checkbox" name="subject" value="国語">国語</label>
+    <label><input type="checkbox" name="subject" value="英語">英語</label>
+    <label><input type="checkbox" name="subject" value="社会">社会</label>
+    <label><input type="checkbox" name="subject" value="数学">数学</label>
+    <label><input type="checkbox" name="subject" value="理科">理科</label>
+    <label><input type="checkbox" name="subject" value="保体">保体</label>
+    <label><input type="checkbox" name="subject" value="美術">美術</label>
+    <label><input type="checkbox" name="subject" value="音楽">音楽</label>
+    <label><input type="checkbox" name="subject" value="その他">その他</label>
+  </div>
+
+  <input id="content" placeholder="宿題内容">
+  <input id="deadline" type="date">
+
   <button onclick="addHomework()">追加</button>
+  <button onclick="back()">戻る</button>
 </div>
 
-<!-- 完了登録 -->
-<div id="doneCard" class="card hidden">
-  <h2>✅ 完了登録</h2>
-  <div id="undoneList">読み込み中...</div>
-  <button onclick="submitDone()">完了にする</button>
+<!-- ===== 完了 ===== -->
+<div id="complete" class="hidden">
+  <h2>未完了の宿題</h2>
+  <div id="taskList"></div>
+  <button onclick="completeSelected()">選択した宿題を完了</button>
+  <button onclick="back()">戻る</button>
 </div>
 
 <script>
-const LIFF_ID = "2008725002-jHJsEKRx";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
+const LIFF_ID = "2008725002-jHJsEKRx";
 
-let userId = "";
-let undoneList = [];
+/* ===== 初期化 ===== */
+document.addEventListener("DOMContentLoaded", () => {
+  liff.init({ liffId: LIFF_ID })
+    .then(() => {
+      if (!liff.isLoggedIn()) return liff.login();
+      checkUser();
+    })
+    .catch(e => document.body.innerText = "LIFFエラー：" + e);
+});
 
-const qs = id => document.getElementById(id);
-const show = id => {
-  ["registerCard","addCard","doneCard"].forEach(i => qs(i).classList.add("hidden"));
-  qs(id).classList.remove("hidden");
-};
-
-async function api(data){
-  const res = await fetch(GAS_URL,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify(data)
-  });
-  return res.json();
-}
-
-async function init(){
-  try {
-    await liff.init({ liffId: LIFF_ID });
-
-    if(!liff.isLoggedIn()){
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-    userId = profile.userId;
-
-    const mode = new URLSearchParams(location.search).get("mode") || "add";
-
-    // 登録判定
-    const check = await api({ action:"checkUser", userId });
-    if(!check.registered){
-      show("registerCard");
-      return;
-    }
-
-    if(mode === "done"){
-      show("doneCard");
-      await loadUndone();
-    } else {
-      show("addCard");
-    }
-
-  } catch(e){
-    document.body.innerHTML = `<pre>${e}</pre>`;
-  }
-}
-
-async function register(){
-  await api({ action:"register", userId });
-  liff.closeWindow();
-}
-
-async function addHomework(){
-  const s = qs("subject").value;
-  const t = qs("text").value;
-  const d = qs("date").value;
-  if(!s || !t || !d){
-    alert("すべて入力してください");
-    return;
-  }
-
-  await api({
-    action:"addHomework",
-    userId,
-    text:`${s}:${t}（期限${d}）`
-  });
-
-  liff.closeWindow();
-}
-
-async function loadUndone(){
-  undoneList = await api({ action:"getUndoneHomework", userId });
-  const area = qs("undoneList");
-  area.innerHTML = "";
-
-  if(!undoneList.length){
-    area.textContent = "未完了の宿題はありません";
-    return;
-  }
-
-  undoneList.forEach((t,i)=>{
-    area.innerHTML += `
-      <div class="checkbox">
-        <input type="checkbox" id="c${i}">
-        <label for="c${i}">${t}</label>
-      </div>`;
+/* ===== ユーザー確認 ===== */
+function checkUser() {
+  liff.getProfile().then(p => {
+    fetch(`${GAS_URL}?mode=checkUser&userId=${p.userId}`)
+      .then(r => r.json())
+      .then(d => {
+        hideAll();
+        if (d.registered) show("menu");
+        else show("register");
+      });
   });
 }
 
-async function submitDone(){
-  for(let i=0;i<undoneList.length;i++){
-    if(qs("c"+i).checked){
-      await api({ action:"doneHomework", userId, text:undoneList[i] });
-    }
-  }
-  liff.closeWindow();
+/* ===== 登録 ===== */
+function registerUser() {
+  liff.getProfile().then(p => {
+    fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        mode: "register",
+        userId: p.userId,
+        name: document.getElementById("userName").value
+      })
+    }).then(() => location.reload());
+  });
 }
 
-init();
+/* ===== 画面操作 ===== */
+function hideAll() {
+  document.querySelectorAll("body > div").forEach(d => d.classList.add("hidden"));
+}
+function show(id) {
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById(id).classList.remove("hidden");
+}
+function back() { hideAll(); show("menu"); }
+function showAdd() { hideAll(); show("add"); }
+function showComplete() {
+  hideAll(); show("complete");
+  loadTasks();
+}
+
+/* ===== 宿題追加 ===== */
+function addHomework() {
+  const subs = [...document.querySelectorAll("input[name=subject]:checked")];
+  if (subs.length !== 1) return alert("教科は1つだけ選択");
+
+  liff.getProfile().then(p => {
+    fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        mode: "addHomework",
+        userId: p.userId,
+        subject: subs[0].value,
+        content: document.getElementById("content").value,
+        deadline: document.getElementById("deadline").value
+      })
+    }).then(() => liff.closeWindow());
+  });
+}
+
+/* ===== 未完了一覧 ===== */
+function loadTasks() {
+  liff.getProfile().then(p => {
+    fetch(`${GAS_URL}?mode=listHomework&userId=${p.userId}`)
+      .then(r => r.json())
+      .then(list => {
+        const area = document.getElementById("taskList");
+        area.innerHTML = "";
+        list.forEach(t => {
+          area.innerHTML += `
+            <div class="task">
+              <label>
+                <input type="checkbox" value="${t.id}">
+                【${t.subject}】${t.content}（${t.deadline}）
+              </label>
+            </div>`;
+        });
+      });
+  });
+}
+
+/* ===== 完了（複数） ===== */
+function completeSelected() {
+  const ids = [...document.querySelectorAll("#taskList input:checked")]
+              .map(c => c.value);
+  if (!ids.length) return alert("選択してください");
+
+  liff.getProfile().then(p => {
+    fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        mode: "completeHomework",
+        userId: p.userId,
+        ids: ids
+      })
+    }).then(() => liff.closeWindow());
+  });
+}
 </script>
+
 </body>
 </html>
 
