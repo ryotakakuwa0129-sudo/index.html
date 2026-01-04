@@ -8,64 +8,53 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
-  body {
-    font-family: system-ui, sans-serif;
-    background: #f5f6f8;
-    margin: 0;
-    padding: 16px;
-  }
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-  .hidden { display: none; }
-  h2 { margin-top: 0; }
-  button {
-    width: 100%;
-    padding: 12px;
-    background: #06c755;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    margin-top: 10px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  button:hover { background: #05a64e; }
-  select, input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    font-size: 16px;
-  }
-  .checkbox {
-    display: flex;
-    align-items: center;
-    margin-top: 6px;
-  }
-  .checkbox label {
-    margin-left: 8px;
-    flex: 1;
-  }
+body {
+  font-family: system-ui;
+  background: #f5f6f8;
+  padding: 16px;
+}
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.hidden { display: none; }
+button {
+  width: 100%;
+  padding: 12px;
+  background: #06c755;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 16px;
+}
+select, input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 16px;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
 </style>
 </head>
-
 <body>
 
-<!-- 登録 -->
+<!-- ユーザー登録 -->
 <div id="registerCard" class="card hidden">
   <h2>👤 ユーザー登録</h2>
-  <p>初めて利用する方は登録してください</p>
   <button onclick="register()">登録する</button>
 </div>
 
 <!-- 宿題追加 -->
 <div id="addCard" class="card hidden">
   <h2>📘 宿題追加</h2>
-
   <select id="subject">
     <option value="">教科を選択</option>
     <option value="国語">国語</option>
@@ -76,8 +65,8 @@
     <option value="保体">保体</option>
     <option value="美術">美術</option>
     <option value="音楽">音楽</option>
-    <option value="その他">その他</option>
     <option value="U">U</option>
+    <option value="その他">その他</option>
   </select>
 
   <input id="text" placeholder="宿題内容">
@@ -93,8 +82,8 @@
 </div>
 
 <script>
-const LIFF_ID = "2008725002-jHJsEKRx"; // あなたのLIFF IDに変更
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec"; // あなたのGAS URLに変更
+const LIFF_ID = "YOUR_LIFF_ID";
+const GAS_URL = "YOUR_GAS_WEB_APP_URL";
 
 let userId = "";
 let undone = [];
@@ -133,8 +122,8 @@ async function init(){
       return;
     }
 
-    const profile = await liff.getProfile();
-    userId = profile.userId;
+    const p = await liff.getProfile();
+    userId = p.userId;
 
     const params = new URLSearchParams(location.search);
     const mode = params.get("mode") || "add";
@@ -148,7 +137,7 @@ async function init(){
     if(mode==="done"){
       show("doneCard");
       loadUndone();
-    } else {
+    }else{
       show("addCard");
     }
 
@@ -159,67 +148,47 @@ async function init(){
 
 async function register(){
   await api({ action:"register", userId });
-  alert("登録完了しました");
-  show("addCard");
+  liff.closeWindow();
 }
 
 async function addHomework(){
   const s = qs("subject").value;
   const t = qs("text").value;
   const d = qs("date").value;
-  if(!s||!t||!d){ alert("すべて入力してください"); return; }
+  if(!s||!t||!d){ alert("全部入力してください"); return; }
 
-  await api({
-    action:"addHomework",
-    userId,
-    subject:s,
-    text:`${s}:${t}（期限${d}）`,
-    date:d
-  });
-
-  alert("宿題を追加しました");
-  qs("subject").value="";
-  qs("text").value="";
-  qs("date").value="";
+  await api({ action:"addHomework", userId, subject:s, text:`${s}:${t}（期限${d}）`, date:d });
+  liff.closeWindow();
 }
 
 async function loadUndone(){
   undone = await apiJson({ action:"getUndoneHomework", userId });
   const area = qs("undoneList");
   area.innerHTML="";
-  if(undone.length===0){
-    area.innerHTML = "<p>未完了の宿題はありません</p>";
-    return;
-  }
-
   undone.forEach((t,i)=>{
-    const div = document.createElement("div");
-    div.className="checkbox";
-    div.innerHTML = `<input type="checkbox" id="c${i}">
-                     <label for="c${i}">${t}</label>`;
+    const div = document.createElement('div');
+    div.className = "checkbox";
+    const input = document.createElement('input');
+    input.type="checkbox";
+    input.id = `c${i}`;
+    input.dataset.index = i;
+    const label = document.createElement('label');
+    label.htmlFor = `c${i}`;
+    label.innerText = t;
+    div.appendChild(input);
+    div.appendChild(label);
     area.appendChild(div);
   });
 }
 
 async function submitDone(){
-  const doneItems = [];
-  for(let i=0;i<undone.length;i++){
-    if(qs("c"+i)?.checked){
-      doneItems.push(undone[i]);
-    }
+  const checked = [...document.querySelectorAll('#undoneList input:checked')];
+  if(checked.length===0){ alert("選択してください"); return; }
+  for(let c of checked){
+    const idx = c.dataset.index;
+    await api({ action:"doneHomework", userId, text:undone[idx] });
   }
-
-  if(doneItems.length===0){
-    alert("完了する宿題を選んでください");
-    return;
-  }
-
-  for(const item of doneItems){
-    await api({ action:"doneHomework", userId, text:item });
-  }
-
-  alert("完了登録しました");
-  loadUndone();
+  liff.closeWindow();
 }
 
 init();
