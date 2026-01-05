@@ -1,58 +1,44 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>宿題追加</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="common.js"></script>
-</head>
-<body>
 
-<h2>➕ 宿題追加</h2>
+<h3>➕ 宿題追加</h3>
 
-<p>教科</p>
-<div id="subjects"></div>
+<div>
+  <button onclick="setSub('国語')">国語</button>
+  <button onclick="setSub('数学')">数学</button>
+  <button onclick="setSub('英語')">英語</button>
+  <button onclick="setSub('理科')">理科</button>
+  <button onclick="setSub('社会')">社会</button>
+  <button onclick="setSub('音楽')">音楽</button>
+  <button onclick="setSub('美術')">美術</button>
+  <button onclick="setSub('保体')">保体</button>
+</div>
 
-<input id="text" placeholder="内容">
+<p id="sub">教科未選択</p>
+<input id="text" placeholder="宿題内容">
 <input id="date" type="date">
 
-<button onclick="addHomework()">追加</button>
-<button onclick="location.href='index.html'">戻る</button>
+<button onclick="add()">追加</button>
 
 <script>
-liffInit();
+let subject="";
 
-let subject = "";
-const list = ["国語","数学","英語","理科","社会","音楽","美術","保体"];
+async function start(){ await liffInit() }
+function setSub(s){ subject=s; sub.innerText="教科："+s }
 
-const box = document.getElementById("subjects");
-list.forEach(s => {
-  const b = document.createElement("button");
-  b.innerText = s;
-  b.onclick = () => subject = s;
-  box.appendChild(b);
-});
-
-async function addHomework() {
-  const text = document.getElementById("text").value;
-  const date = document.getElementById("date").value;
-
-  if (!subject || !text || !date) {
+async function add(){
+  if(!subject || !text.value || !date.value){
     alert("未入力があります");
     return;
   }
-
   await post({
-    action: "addHomework",
+    action:"addHomework",
     userId,
     subject,
-    text,
-    date
+    text:text.value,
+    date:date.value
   });
-
-  alert("追加しました");
-  location.href = "index.html";
+  liff.closeWindow();
 }
+start();
 </script>
-</body>
-</html>
