@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>宿題管理システム</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="liff.js"></script>
+  </head>
+  <body>
+    <h1>宿題管理システム</h1>
+    <ul>
+      <li><a href="?page=register">ユーザー登録</a></li>
+      <li><a href="?page=add">宿題追加</a></li>
+      <li><a href="?page=done">宿題完了</a></li>
+    </ul>
+  </body>
+</html>
