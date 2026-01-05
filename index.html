@@ -1,139 +1,135 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>宿題管理</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
-body {
-  font-family: sans-serif;
-  padding: 12px;
-  background: #f7f7f7;
-}
-
-h2 { margin-bottom: 4px; }
-h3 { margin-top: 18px; }
-
-#status {
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #555;
-}
-
-input, button {
+body { font-family: sans-serif; padding: 14px; }
+h2 { text-align: center; }
+button {
   width: 100%;
-  padding: 10px;
-  margin-top: 6px;
+  padding: 12px;
+  margin: 6px 0;
   font-size: 16px;
 }
-
-.subject-buttons button {
-  width: auto;
-  margin: 4px;
-  background: #e0f0ff;
-  border: none;
-  border-radius: 6px;
+.subjects button {
+  width: 48%;
+  margin: 4px 1%;
 }
-
-.subject-buttons button.active {
-  background: #4a90e2;
-  color: white;
-}
-
-.action-btn {
+.selected {
   background: #4caf50;
   color: white;
-  border: none;
-  border-radius: 6px;
 }
-
-.done-btn {
-  background: #ff7043;
-  color: white;
-  border: none;
-  border-radius: 6px;
-}
-
-.hw {
-  background: white;
-  border-radius: 6px;
-  padding: 8px;
-  margin-top: 6px;
-}
+.hw { border-bottom: 1px solid #ccc; padding: 6px 0; }
+.center { text-align: center; margin-top: 40px; }
+.hidden { display: none; }
 </style>
 </head>
 
 <body>
 <h2>📘 宿題管理</h2>
-<div id="status">読み込み中…</div>
+<div id="status" class="center">初期化中…</div>
 
-<h3>➕ 宿題追加</h3>
+<!-- HOME -->
+<div id="home" class="hidden">
+  <button onclick="go('add')">➕ 宿題追加</button>
+  <button onclick="go('done')">☑ 宿題完了</button>
+</div>
 
-<div>📚 教科を選択</div>
-<div class="subject-buttons" id="subjects"></div>
+<!-- REGISTER -->
+<div id="register" class="hidden center">
+  <p>ユーザー登録が必要です</p>
+  <button onclick="register()">登録する</button>
+</div>
 
-<input id="text" placeholder="宿題の内容">
-<input id="date" type="date">
+<!-- ADD -->
+<div id="add" class="hidden">
+  <h3>➕ 宿題追加</h3>
 
-<button class="action-btn" onclick="addHomework()">宿題を追加</button>
+  <p>教科を選択</p>
+  <div class="subjects" id="subjects"></div>
 
-<h3>☑ 未完了宿題</h3>
-<div id="list"></div>
-<button class="done-btn" onclick="doneHomework()">チェックした宿題を完了</button>
+  <input id="text" placeholder="内容" style="width:100%;padding:8px;"><br><br>
+  <input id="date" type="date" style="width:100%;padding:8px;"><br><br>
+
+  <button onclick="addHomework()">追加</button>
+  <button onclick="go('home')">戻る</button>
+</div>
+
+<!-- DONE -->
+<div id="done" class="hidden">
+  <h3>☑ 未完了宿題</h3>
+  <div id="list"></div>
+  <button onclick="doneHomework()">完了にする</button>
+  <button onclick="go('home')">戻る</button>
+</div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
-const LIFF_ID = "2008725002-jHJsEKRx";
+/************** 設定 **************/
+const GAS_URL = "【あなたのGAS WebApp URL】";
+const LIFF_ID = "【あなたのLIFF ID】";
 
+/************** 変数 **************/
 let userId = "";
+let registered = false;
 let selectedSubject = "";
 
-const SUBJECT_LIST = ["国語","数学","英語","理科","社会","その他"];
-
-document.addEventListener("DOMContentLoaded", init);
-
+/************** 初期化 **************/
+init();
 async function init() {
   try {
     await liff.init({ liffId: LIFF_ID });
-
     if (!liff.isLoggedIn()) {
       liff.login();
       return;
     }
 
-    const profile = await liff.getProfile();
-    userId = profile.userId;
+    userId = liff.getContext().userId;
+    const res = await post({ action: "checkUser", userId });
+    registered = res.registered;
 
-    makeSubjectButtons();
-    await checkUser();
-    await loadUndone();
-
-    document.getElementById("status").innerText = "準備完了";
+    route();
   } catch (e) {
     document.getElementById("status").innerText = "初期化エラー";
     console.error(e);
   }
 }
 
-function makeSubjectButtons() {
-  const box = document.getElementById("subjects");
-  SUBJECT_LIST.forEach(s => {
-    const btn = document.createElement("button");
-    btn.innerText = s;
-    btn.onclick = () => selectSubject(s, btn);
-    box.appendChild(btn);
-  });
+/************** ルーティング **************/
+function route() {
+  hideAll();
+  const mode = new URLSearchParams(location.search).get("mode") || "home";
+
+  if (!registered && mode !== "register") {
+    show("register");
+    return;
+  }
+
+  show(mode);
+  document.getElementById("status").innerText = "";
+
+  if (mode === "add") renderSubjects();
+  if (mode === "done") loadUndone();
 }
 
-function selectSubject(subject, btn) {
-  selectedSubject = subject;
-  document.querySelectorAll(".subject-buttons button")
-    .forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
+function go(mode) {
+  location.href = `?mode=${mode}`;
 }
 
+function hideAll() {
+  ["home","add","done","register"].forEach(id =>
+    document.getElementById(id).classList.add("hidden")
+  );
+}
+
+function show(id) {
+  document.getElementById(id).classList.remove("hidden");
+}
+
+/************** GAS通信 **************/
 async function post(data) {
   const res = await fetch(GAS_URL, {
     method: "POST",
@@ -143,19 +139,40 @@ async function post(data) {
   return res.json();
 }
 
-async function checkUser() {
-  const res = await post({ action: "checkUser", userId });
-  if (!res.registered) {
-    await post({ action: "register", userId });
-  }
+/************** 登録 **************/
+async function register() {
+  await post({ action: "register", userId });
+  registered = true;
+  go("home");
 }
 
+/************** 教科 **************/
+function renderSubjects() {
+  const list = ["国語","数学","英語","理科","社会","音楽","美術","保健体育","その他"];
+  const box = document.getElementById("subjects");
+  box.innerHTML = "";
+  list.forEach(s => {
+    const b = document.createElement("button");
+    b.innerText = s;
+    b.onclick = () => selectSubject(b, s);
+    box.appendChild(b);
+  });
+}
+
+function selectSubject(btn, s) {
+  selectedSubject = s;
+  [...document.querySelectorAll(".subjects button")]
+    .forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+}
+
+/************** 宿題追加 **************/
 async function addHomework() {
   const text = document.getElementById("text").value;
   const date = document.getElementById("date").value;
 
   if (!selectedSubject || !text || !date) {
-    alert("教科・内容・日付をすべて選んでください");
+    alert("すべて入力してください");
     return;
   }
 
@@ -167,29 +184,23 @@ async function addHomework() {
     date
   });
 
-  document.getElementById("text").value = "";
-  await loadUndone();
-  alert("宿題を追加しました");
+  alert("追加しました");
+  go("home");
 }
 
+/************** 未完了 **************/
 async function loadUndone() {
-  const res = await post({
-    action: "getUndoneHomework",
-    userId
-  });
-
+  const res = await post({ action: "getUndoneHomework", userId });
   const list = document.getElementById("list");
   list.innerHTML = "";
 
   res.forEach(t => {
-    const div = document.createElement("div");
-    div.className = "hw";
-    div.innerHTML = `
-      <label>
-        <input type="checkbox" value="${t}">
-        ${t}
-      </label>`;
-    list.appendChild(div);
+    const d = document.createElement("div");
+    d.className = "hw";
+    d.innerHTML = `<label>
+      <input type="checkbox" value="${t}"> ${t}
+    </label>`;
+    list.appendChild(d);
   });
 }
 
@@ -197,20 +208,16 @@ async function doneHomework() {
   const checked = [...document.querySelectorAll("input[type=checkbox]:checked")]
     .map(c => c.value);
 
-  if (checked.length === 0) {
-    alert("完了する宿題を選択してください");
+  if (!checked.length) {
+    alert("選択してください");
     return;
   }
 
-  await post({
-    action: "doneHomework",
-    userId,
-    doneList: checked
-  });
-
-  await loadUndone();
+  await post({ action: "doneHomework", userId, doneList: checked });
   alert("完了しました");
+  go("home");
 }
 </script>
 </body>
 </html>
+
