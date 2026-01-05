@@ -1,88 +1,67 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>宿題完了登録</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 12px; }
-    button { margin: 6px 0; padding: 8px; width: 100%; }
-    .hw { border-bottom: 1px solid #ccc; padding: 6px 0; }
-  </style>
+<meta charset="UTF-8">
+<title>宿題完了登録</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+body{font-family:sans-serif;padding:20px;}
+button{margin:5px;padding:8px 12px;}
+label{display:block;margin:5px;}
+.fade-in{animation:fadeIn 0.5s;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+</style>
 </head>
-<body>
-  <h2>☑ 未完了宿題</h2>
-  <div id="status">読み込み中...</div>
-  <div id="list"></div>
-  <button id="doneBtn">完了にする</button>
+<body class="fade-in">
+<h2>宿題完了登録</h2>
+<div id="hwList"></div>
+<button id="doneBtn">完了登録</button>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
-const LIFF_ID = "2008725002-jHJsEKRx";
+let liffId="YOUR_LIFF_ID";
 
-let userId = "";
+async function main(){
+  await liff.init({ liffId });
+  const userId=liff.getContext().userId;
 
-async function init() {
-  try {
-    await liff.init({ liffId: LIFF_ID });
-    userId = liff.getContext().userId;
+  // 未登録なら登録画面に
+  const resCheck = await fetch(liff.getOS()+'/liffApi',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'checkUser', userId })
+  });
+  const dataCheck = await resCheck.json();
+  if(!dataCheck.registered){ window.location.href='register.html'; return; }
 
-    const res = await post({ action: "checkUser", userId });
-    if (!res.registered) {
-      window.location.href = "register.html"; // 未登録なら登録画面へ
-      return;
-    }
-
-    document.getElementById("status").innerText = "ユーザー確認済み";
-    await loadUndone();
-  } catch (e) {
-    console.error(e);
-    document.getElementById("status").innerText = "初期化エラー";
-  }
-}
-
-function post(data) {
-  return fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  }).then(res => res.json());
-}
-
-// 未完了リスト取得
-async function loadUndone() {
-  const res = await post({ action: "getUndoneHomework", userId });
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-  if (res.length === 0) {
-    list.innerHTML = "未完了の宿題はありません";
-    return;
-  }
-  res.forEach(t => {
-    const div = document.createElement("div");
-    div.className = "hw";
-    div.innerHTML = `<label><input type="checkbox" value="${t}"> ${t}</label>`;
-    list.appendChild(div);
+  // 未完了宿題取得
+  const res = await fetch(liff.getOS()+'/liffApi',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'getUndoneHomework', userId })
+  });
+  const data = await res.json();
+  const hwListDiv = document.getElementById('hwList');
+  data.forEach((hw,i)=>{
+    const label = document.createElement('label');
+    label.innerHTML=`<input type="checkbox" value="${hw}"> ${hw}`;
+    hwListDiv.appendChild(label);
   });
 }
 
-// 完了ボタン
-document.getElementById("doneBtn").onclick = async () => {
-  const checked = [...document.querySelectorAll("input[type=checkbox]:checked")].map(c => c.value);
-  if (checked.length === 0) { alert("選択してください"); return; }
+document.getElementById('doneBtn').addEventListener('click', async()=>{
+  const userId=liff.getContext().userId;
+  const doneList=Array.from(document.querySelectorAll('#hwList input:checked')).map(i=>i.value);
+  if(doneList.length===0){ alert('宿題を選択してください'); return; }
 
-  const res = await post({ action: "doneHomework", userId, doneList: checked });
-  if (res.ok) {
-    alert("完了にしました");
-    liff.closeWindow();
-  } else {
-    alert("失敗");
-  }
-};
+  await fetch(liff.getOS()+'/liffApi',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'doneHomework', userId, doneList })
+  });
+  alert('完了登録しました');
+  liff.closeWindow();
+});
 
-init();
+main();
 </script>
 </body>
 </html>
+
 
