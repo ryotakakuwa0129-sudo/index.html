@@ -1,23 +1,16 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>ユーザー登録</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="common.js"></script>
-</head>
-<body>
 
-<h2>ユーザー登録</h2>
-<button onclick="register()">登録する</button>
+<h3>👤 ユーザー登録</h3>
+<p>このLINEアカウントを登録します</p>
+<button onclick="reg()">登録</button>
 
 <script>
-liffInit();
-
-async function register() {
-  await post({ action: "register", userId });
-  location.href = "index.html";
+async function reg(){
+  await liff.init({ liffId: LIFF_ID });
+  const uid = liff.getContext().userId;
+  await post({ action:"register", userId:uid });
+  location.href="index.html";
 }
 </script>
-</body>
-</html>
+
