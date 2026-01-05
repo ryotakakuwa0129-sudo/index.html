@@ -1,58 +1,85 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>宿題完了</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<style>
-body { font-family: sans-serif; padding: 12px; }
-button { padding: 8px; width: 100%; margin-top: 6px; }
-.hw-item { display:block; margin:4px 0; }
-</style>
+  <meta charset="UTF-8">
+  <title>宿題完了登録</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 12px; }
+    button { margin: 6px 0; padding: 8px; width: 100%; }
+    .hw { border-bottom: 1px solid #ccc; padding: 6px 0; }
+  </style>
 </head>
 <body>
-<h2>宿題完了登録</h2>
-<div id="list">読み込み中...</div>
-<button id="doneBtn">完了にする</button>
+  <h2>☑ 未完了宿題</h2>
+  <div id="status">読み込み中...</div>
+  <div id="list"></div>
+  <button id="doneBtn">完了にする</button>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
-const LIFF_ID = "2008725002-jHJsEKRx";
+const GAS_URL = "GAS_WEB_APP_URL";
+const LIFF_ID = "LIFF_ID";
+
 let userId = "";
 
 async function init() {
-  await liff.init({ liffId: LIFF_ID });
-  if (!liff.isLoggedIn()) liff.login();
-  userId = liff.getContext().userId;
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    userId = liff.getContext().userId;
 
-  const res = await fetch(GAS_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'getUndoneHomework', userId})
-  }).then(r=>r.json());
+    const res = await post({ action: "checkUser", userId });
+    if (!res.registered) {
+      window.location.href = "register.html"; // 未登録なら登録画面へ
+      return;
+    }
 
-  const listDiv = document.getElementById('list');
-  listDiv.innerHTML = '';
-  res.forEach(t=>{
-    const lbl = document.createElement('label');
-    lbl.className = 'hw-item';
-    lbl.innerHTML = `<input type="checkbox" value="${t}"> ${t}`;
-    listDiv.appendChild(lbl);
+    document.getElementById("status").innerText = "ユーザー確認済み";
+    await loadUndone();
+  } catch (e) {
+    console.error(e);
+    document.getElementById("status").innerText = "初期化エラー";
+  }
+}
+
+function post(data) {
+  return fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  }).then(res => res.json());
+}
+
+// 未完了リスト取得
+async function loadUndone() {
+  const res = await post({ action: "getUndoneHomework", userId });
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (res.length === 0) {
+    list.innerHTML = "未完了の宿題はありません";
+    return;
+  }
+  res.forEach(t => {
+    const div = document.createElement("div");
+    div.className = "hw";
+    div.innerHTML = `<label><input type="checkbox" value="${t}"> ${t}</label>`;
+    list.appendChild(div);
   });
 }
 
-document.getElementById('doneBtn').addEventListener('click', async () => {
-  const checked = [...document.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value);
-  if (checked.length===0) { alert('選択してください'); return; }
+// 完了ボタン
+document.getElementById("doneBtn").onclick = async () => {
+  const checked = [...document.querySelectorAll("input[type=checkbox]:checked")].map(c => c.value);
+  if (checked.length === 0) { alert("選択してください"); return; }
 
-  await fetch(GAS_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'doneHomework', userId, doneList:checked})
-  });
-  alert('完了にしました');
-  liff.closeWindow();
-});
+  const res = await post({ action: "doneHomework", userId, doneList: checked });
+  if (res.ok) {
+    alert("完了にしました");
+    liff.closeWindow();
+  } else {
+    alert("失敗");
+  }
+};
 
 init();
 </script>
