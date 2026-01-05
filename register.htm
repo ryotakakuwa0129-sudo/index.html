@@ -1,65 +1,50 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ユーザー登録</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 12px; }
-    button { margin: 6px 0; padding: 8px; width: 100%; }
-  </style>
+<meta charset="UTF-8">
+<title>ユーザー登録</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+body{font-family:sans-serif;text-align:center;padding:20px;}
+button{padding:10px 20px;margin:10px;font-size:16px;}
+.fade-in{animation:fadeIn 0.5s;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+</style>
 </head>
-<body>
-  <h2>👤 ユーザー登録</h2>
-  <div id="status">読み込み中...</div>
-  <button id="registerBtn">登録する</button>
+<body class="fade-in">
+<h2>ユーザー登録</h2>
+<p>下のボタンを押すと登録されます</p>
+<button id="registerBtn">登録する</button>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
-const LIFF_ID = "2008725002-jHJsEKRx";
+let liffId = "YOUR_LIFF_ID"; // ここにLIFF IDを設定
 
-let userId = "";
+async function main() {
+  await liff.init({ liffId });
+  const userId = liff.getContext().userId;
 
-async function init() {
-  try {
-    await liff.init({ liffId: LIFF_ID });
-    userId = liff.getContext().userId;
-
-    const res = await post({ action: "checkUser", userId });
-    if (res.registered) {
-      alert("既に登録済みです");
-      liff.closeWindow();
-      return;
-    }
-
-    document.getElementById("status").innerText = "未登録ユーザー";
-  } catch (e) {
-    console.error(e);
-    document.getElementById("status").innerText = "初期化エラー";
-  }
+  // 登録済みなら自動で閉じる
+  const res = await fetch(liff.getOS()+'/liffApi',{ 
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'checkUser', userId })
+  });
+  const data = await res.json();
+  if(data.registered){ liff.closeWindow(); }
 }
 
-function post(data) {
-  return fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  }).then(res => res.json());
-}
+document.getElementById('registerBtn').addEventListener('click', async()=>{
+  const userId = liff.getContext().userId;
+  await fetch(liff.getOS()+'/liffApi',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'register', userId })
+  });
+  alert('登録完了！');
+  liff.closeWindow();
+});
 
-// 登録ボタン
-document.getElementById("registerBtn").onclick = async () => {
-  const res = await post({ action: "register", userId });
-  if (res.ok) {
-    alert("登録しました");
-    liff.closeWindow();
-  } else {
-    alert("登録失敗");
-  }
-};
-
-init();
+main();
 </script>
 </body>
 </html>
