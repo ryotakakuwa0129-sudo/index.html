@@ -1,6 +1,6 @@
 // 共通LIFF初期化とGAS通信
 async function initLiff() {
-  await liff.init({ liffId: "YOUR_LIFF_ID" });
+  await liff.init({ liffId: "2008725002-jHJsEKRx" });
 }
 initLiff();
 
