@@ -1,1 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>宿題完了</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+body { font-family: sans-serif; padding: 12px; }
+button { padding: 8px; width: 100%; margin-top: 6px; }
+.hw-item { display:block; margin:4px 0; }
+</style>
+</head>
+<body>
+<h2>宿題完了登録</h2>
+<div id="list">読み込み中...</div>
+<button id="doneBtn">完了にする</button>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec";
+const LIFF_ID = "2008725002-jHJsEKRx";
+let userId = "";
+
+async function init() {
+  await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) liff.login();
+  userId = liff.getContext().userId;
+
+  const res = await fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'getUndoneHomework', userId})
+  }).then(r=>r.json());
+
+  const listDiv = document.getElementById('list');
+  listDiv.innerHTML = '';
+  res.forEach(t=>{
+    const lbl = document.createElement('label');
+    lbl.className = 'hw-item';
+    lbl.innerHTML = `<input type="checkbox" value="${t}"> ${t}`;
+    listDiv.appendChild(lbl);
+  });
+}
+
+document.getElementById('doneBtn').addEventListener('click', async () => {
+  const checked = [...document.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value);
+  if (checked.length===0) { alert('選択してください'); return; }
+
+  await fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'doneHomework', userId, doneList:checked})
+  });
+  alert('完了にしました');
+  liff.closeWindow();
+});
+
+init();
+</script>
+</body>
+</html>
 
