@@ -1,50 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>宿題管理</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="common.js"></script>
 
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<h2>📘 宿題管理</h2>
+<p id="status">初期化中...</p>
 
-  <!-- 共通JS -->
-  <script src="common.js"></script>
+<button onclick="go('add.html')">➕ 宿題追加</button>
+<button onclick="go('done.html')">☑ 宿題完了</button>
 
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 16px;
-      text-align: center;
-    }
-    button {
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
+<script>
+async function start(){
+  try{
+    await liffInit();
+    status.innerText="準備完了";
+  }catch(e){}
+}
+function go(p){ location.href=p }
+start();
+</script>
 
-  <h2>📘 宿題管理</h2>
-  <p id="status">読み込み中...</p>
-
-  <button onclick="go('add.html')">➕ 宿題を追加</button>
-  <button onclick="go('done.html')">☑ 宿題を完了</button>
-
-  <script>
-    async function start() {
-      await liffInit();
-      document.getElementById("status").innerText = "準備完了";
-    }
-
-    function go(page) {
-      location.href = page;
-    }
-
-    start();
-  </script>
-
-</body>
-</html>
