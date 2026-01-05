@@ -11,7 +11,7 @@ async function getLiffUserId() {
 }
 
 async function liffApiCall(payload) {
-  const url = "YOUR_GAS_WEBAPP_URL"; // GAS WebApp URLに置き換え
+  const url = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec"; // GAS WebApp URLに置き換え
   const resp = await fetch(url, {
     method: "POST",
     body: JSON.stringify(payload),
