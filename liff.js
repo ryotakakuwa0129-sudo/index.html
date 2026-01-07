@@ -88,6 +88,7 @@ async function initLIFF(pageName) {
       console.log("init done page");
       window.initDonePage();
     }
+    
 
     console.log("LIFF init finished");
 
@@ -96,6 +97,14 @@ async function initLIFF(pageName) {
     alert("エラーが発生しました。LINEから再度開いてください。");
   }
 }
+
+if (pageName === "index") {
+  location.replace(
+    window.APP.registered ? "done.html" : "register.html"
+  );
+  return;
+}
+
 
 // =====================
 // 自動実行（HTML側で pageName 指定）
