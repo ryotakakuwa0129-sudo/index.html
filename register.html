@@ -19,6 +19,7 @@
   document.getElementById("reg").onclick = async ()=>{
     await api("register",{userId:getUserId()});
     location.href="done.html";
+    closeLiff(); // 自動クローズ
   };
 })();
 </script>
