@@ -1,44 +1,62 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<title>宿題追加</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>宿題追加</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="liff.js"></script>
 </head>
-<body class="card slide-up">
-<h2>➕ 宿題追加</h2>
+<body>
 
-<label>教科</label>
-<select id="subject">
-  <option>国語</option><option>算数</option><option>理科</option>
-  <option>社会</option><option>英語</option><option>音楽</option>
-  <option>美術</option><option>保体</option><option>その他</option>
-</select>
+<div class="card slide-up">
+  <h1>✏️ 宿題追加</h1>
 
-<label>内容</label>
-<textarea id="text"></textarea>
+  <div class="subjects">
+    <button onclick="setSub('国語')">国語</button>
+    <button onclick="setSub('算数')">算数</button>
+    <button onclick="setSub('理科')">理科</button>
+    <button onclick="setSub('社会')">社会</button>
+    <button onclick="setSub('英語')">英語</button>
+    <button onclick="setSub('音楽')">音楽</button>
+    <button onclick="setSub('美術')">美術</button>
+    <button onclick="setSub('保体')">保体</button>
+    <button onclick="setSub('その他')">その他</button>
+  </div>
 
-<label>期限</label>
-<input type="date" id="date">
+  <p id="subjectView">教科：未選択</p>
 
-<button id="add">追加</button>
+  <textarea id="text" placeholder="宿題の内容"></textarea>
+  <input type="date" id="date">
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="liff.js"></script>
-<script src="api.js"></script>
+  <button id="addBtn" class="primary">追加する</button>
+</div>
+
 <script>
-(async()=>{
-  await initLiff();
-  document.getElementById("add").onclick=async()=>{
-    await api("addHomework",{
-      subject:subject.value,
-      text:`${subject.value}:${text.value}（期限${date.value}）`,
-      date:date.value
+let subject = "";
+
+function setSub(s) {
+  subject = s;
+  document.getElementById("subjectView").textContent = "教科：" + s;
+}
+
+async function main() {
+  await liffInit();
+
+  document.getElementById("addBtn").onclick = async () => {
+    if (!subject) return alert("教科を選んでください");
+
+    await api("addHomework", {
+      subject,
+      text: `${subject}:${text.value}（期限${date.value}）`,
+      date: date.value
     });
-    alert("追加しました");
-    closeLiff(); // 自動クローズ
+
+    closeLiff();
   };
-})();
+}
+main();
 </script>
 </body>
 </html>
