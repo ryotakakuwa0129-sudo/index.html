@@ -13,3 +13,12 @@ function getUserId() {
   return liff.getDecodedIDToken().sub;
 }
 
+function closeLiff(delay = 800) {
+  setTimeout(() => {
+    if (liff.isInClient()) {
+      liff.closeWindow();
+    }
+  }, delay);
+}
+
+
