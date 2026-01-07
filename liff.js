@@ -1,21 +1,15 @@
-// 共通LIFF初期化とGAS通信
+const LIFF_ID = "YOUR_LIFF_ID";
+const GAS_URL = "YOUR_GAS_WEBAPP_URL";
+
 async function initLiff() {
-  await liff.init({ liffId: "2008725002-jHJsEKRx" });
-}
-initLiff();
-
-async function getLiffUserId() {
-  if (!liff.isLoggedIn()) await liff.login();
-  const profile = await liff.getProfile();
-  return profile.userId;
+  await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 }
 
-async function liffApiCall(payload) {
-  const url = "https://script.google.com/macros/s/AKfycbz910FJbvEKdMV-8dEGncfx2YocZHmNVeuyZHRA26c6SmqEaBEgPzwURfl1fQonvpTbpQ/exec"; // GAS WebApp URLに置き換え
-  const resp = await fetch(url, {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'application/json' }
-  });
-  return await resp.json();
+function getUserId() {
+  return liff.getDecodedIDToken().sub;
 }
+
