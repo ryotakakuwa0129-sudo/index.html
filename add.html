@@ -1,62 +1,64 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <title>宿題追加</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="liff.js"></script>
+  <script src="js/liff.js"></script>
+  <script src="js/add.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 16px;
+      background: #f5f7fa;
+    }
+    h2 { text-align: center; }
+    .subjects button {
+      margin: 4px;
+      padding: 10px 14px;
+      border-radius: 20px;
+      border: none;
+      background: #4f7cff;
+      color: white;
+      transition: 0.2s;
+    }
+    .subjects button.active {
+      background: #ff9800;
+      transform: scale(1.05);
+    }
+    textarea, input[type="date"] {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      font-size: 16px;
+    }
+    .submit {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+  </style>
 </head>
+
 <body>
+  <h2>📘 宿題追加</h2>
 
-<div class="card slide-up">
-  <h1>✏️ 宿題追加</h1>
+  <div class="subjects" id="subjects"></div>
 
-  <div class="subjects">
-    <button onclick="setSub('国語')">国語</button>
-    <button onclick="setSub('数学')">数学</button>
-    <button onclick="setSub('理科')">理科</button>
-    <button onclick="setSub('社会')">社会</button>
-    <button onclick="setSub('英語')">英語</button>
-    <button onclick="setSub('音楽')">音楽</button>
-    <button onclick="setSub('美術')">美術</button>
-    <button onclick="setSub('保体')">保体</button>
-    <button onclick="setSub('その他')">その他</button>
-  </div>
-
-  <p id="subjectView">教科：未選択</p>
-
-  <textarea id="text" placeholder="宿題の内容"></textarea>
+  <textarea id="text" placeholder="宿題内容"></textarea>
   <input type="date" id="date">
 
-  <button id="addBtn" class="primary">追加する</button>
-</div>
+  <button class="submit" onclick="submitHomework()">追加</button>
 
-<script>
-let subject = "";
-
-function setSub(s) {
-  subject = s;
-  document.getElementById("subjectView").textContent = "教科：" + s;
-}
-
-async function main() {
-  await liffInit();
-
-  document.getElementById("addBtn").onclick = async () => {
-    if (!subject) return alert("教科を選んでください");
-
-    await api("addHomework", {
-      subject,
-      text: `${subject}:${text.value}（期限${date.value}）`,
-      date: date.value
-    });
-
-    closeLiff();
-  };
-}
-main();
-</script>
+  <script>
+    initLIFF("add");
+  </script>
 </body>
 </html>
