@@ -1,16 +1,38 @@
-<body>
-<h2>ユーザー登録</h2>
-<button onclick="register()">登録する</button>
-
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>登録</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="liff.js"></script>
+
+<style>
+body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  color:#fff;
+}
+button{
+  padding:16px 30px;
+  font-size:18px;
+  border:none;
+  border-radius:30px;
+}
+</style>
+</head>
+
+<body>
+<button onclick="reg()">登録する</button>
+
 <script>
 initLIFF("register");
-
-async function register(){
+async function reg(){
   await api("register");
   liff.closeWindow();
 }
 </script>
 </body>
-
+</html>
