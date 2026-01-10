@@ -1,110 +1,76 @@
 const LIFF_ID = "2008725002-jHJsEKRx";
 
-let userId = null;
-let selectedSubject = null;
+let userId = "";
+let subject = "";
 
-/* ========= page取得 ========= */
-function getPage() {
+function getPage(){
   return new URLSearchParams(location.search).get("page") || "add";
 }
 
-/* ========= page表示 ========= */
-function showPage() {
-  document.querySelectorAll("section").forEach(s => s.style.display = "none");
-  const p = document.getElementById("page-" + getPage());
-  if (p) p.style.display = "block";
+function showPage(){
+  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+  document.getElementById("page-"+getPage()).style.display="block";
 }
 
-/* ========= LIFF init ========= */
-async function init() {
-  await liff.init({ liffId: LIFF_ID });
+document.addEventListener("DOMContentLoaded", showPage);
 
-  if (!liff.isLoggedIn()) {
+async function init(){
+  await liff.init({liffId:LIFF_ID});
+  if(!liff.isLoggedIn()){
     liff.login();
     return;
   }
-
   userId = (await liff.getProfile()).userId;
-  showPage();
 
-  const res = await api({
-    action: "checkUser",
-    userId
-  });
-
-  if (!res.registered && getPage() !== "register") {
-    location.href = "index.html?page=register";
-    return;
-  }
-
-  if (getPage() === "done") {
+  if(getPage()==="done"){
     loadUndone();
-    setTimeout(() => liff.closeWindow(), 1500);
   }
 }
-
 init();
 
-/* ========= register ========= */
-function register() {
-  api({ action: "register", userId })
-    .then(() => location.href = "index.html?page=add");
-}
+/* ===== グローバル関数（onclick用） ===== */
 
-/* ========= subject ========= */
-function selectSubject(s) {
-  selectedSubject = s;
-  document.querySelectorAll(".subjects button").forEach(b => {
-    b.classList.toggle("active", b.textContent === s);
-  });
-}
+window.selectSubject = btn=>{
+  document.querySelectorAll(".subjects button")
+    .forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  subject = btn.textContent;
+};
 
-/* ========= add ========= */
-function addHomework() {
-  const text = hwText.value.trim();
-  const date = hwDate.value;
+window.register = async ()=>{
+  await api({action:"register",userId});
+  location.href="index.html?page=add";
+};
 
-  if (!selectedSubject || !text || !date) {
+window.addHomework = async ()=>{
+  const text = document.getElementById("text").value;
+  const date = document.getElementById("date").value;
+  if(!subject||!text||!date){
     alert("すべて入力してください");
     return;
   }
+  await api({action:"addHomework",subject,text,date});
+  liff.closeWindow();
+};
 
-  api({
-    action: "addHomework",
-    subject: selectedSubject,
-    text,
-    date
-  }).then(() => {
-    hwText.value = "";
-    alert("追加しました");
+async function loadUndone(){
+  const list = await api({action:"getUndoneHomework",userId});
+  const box = document.getElementById("done-list");
+  box.innerHTML="";
+  list.forEach(t=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.innerHTML=`<input type="checkbox" value="${t}"><span>${t}</span>`;
+    box.appendChild(div);
   });
 }
 
-/* ========= load undone ========= */
-function loadUndone() {
-  api({
-    action: "getUndoneHomework",
-    userId
-  }).then(list => {
-    doneList.innerHTML = list.map(v => `
-      <label class="check">
-        <input type="checkbox" value="${v}"> ${v}
-      </label>
-    `).join("");
-  });
-}
+window.doneHomework = async ()=>{
+  const done=[...document.querySelectorAll("#done-list input:checked")]
+    .map(i=>i.value);
+  if(!done.length) return;
+  await api({action:"doneHomework",userId,doneList:done});
+  liff.closeWindow();
+};
 
-/* ========= done ========= */
-function doneHomework() {
-  const done = [...document.querySelectorAll("input:checked")]
-    .map(c => c.value);
-
-  api({
-    action: "doneHomework",
-    userId,
-    doneList: done
-  }).then(() => {
-    location.href = "index.html?page=done";
-  });
-}
 
