@@ -1,30 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>ユーザー登録</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="js/liff.js"></script>
-</head>
 <body>
-  <h2>初回登録</h2>
-  <button id="registerBtn">登録する</button>
+<h2>ユーザー登録</h2>
+<button onclick="register()">登録する</button>
 
-  <script>
-    initLIFF("register");
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="liff.js"></script>
+<script>
+initLIFF("register");
 
-    document.getElementById("registerBtn").onclick = async () => {
-      await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "register",
-          userId: APP.userId
-        })
-      });
-
-      liff.closeWindow();
-    };
-  </script>
+async function register(){
+  await api("register");
+  liff.closeWindow();
+}
+</script>
 </body>
-</html>
+
