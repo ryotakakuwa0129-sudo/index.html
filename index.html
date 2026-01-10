@@ -1,17 +1,60 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<title>宿題管理</title>
+  <meta charset="utf-8">
+  <title>宿題管理</title>
 
-<link rel="stylesheet" href="style.css">
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<div id="app"></div>
 
-<script src="api.js"></script>
+<!-- ===== ローディング ===== -->
+<div id="loading" class="center">
+  <div class="spinner"></div>
+  <p>確認中...</p>
+</div>
+
+<!-- ===== 登録 ===== -->
+<section id="page-register" class="page hidden">
+  <h1>📘 宿題管理</h1>
+  <p>最初に登録してください</p>
+  <button class="primary" id="registerBtn">登録する</button>
+</section>
+
+<!-- ===== 追加 ===== -->
+<section id="page-add" class="page hidden">
+  <h1>✏️ 宿題追加</h1>
+
+  <div class="subjects">
+    <button data-subject="国語">国語</button>
+    <button data-subject="数学">数学</button>
+    <button data-subject="理科">理科</button>
+    <button data-subject="社会">社会</button>
+    <button data-subject="英語">英語</button>
+    <button data-subject="保体">保体</button>
+    <button data-subject="美術">美術</button>
+    <button data-subject="音楽">音楽</button>
+    <button data-subject="その他">その他</button>
+  </div>
+
+  <textarea id="hwText" placeholder="宿題内容"></textarea>
+
+  <input type="date" id="hwDate">
+
+  <button class="primary" id="addBtn">追加する</button>
+</section>
+
+<!-- ===== 完了 ===== -->
+<section id="page-done" class="page hidden">
+  <h1>✅ 宿題完了</h1>
+  <div id="doneList"></div>
+  <button class="primary" id="doneBtn">完了登録</button>
+</section>
+
 <script src="liff.js"></script>
+<script src="api.js"></script>
 </body>
 </html>
