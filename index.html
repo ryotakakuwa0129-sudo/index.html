@@ -1,52 +1,55 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>宿題管理</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-
 <body>
-<header>📘 宿題管理</header>
 
-<!-- ================= 登録 ================= -->
-<section id="page-register">
-  <h2>ユーザー登録</h2>
-  <p>初回のみ登録が必要です</p>
-  <button class="primary" onclick="register()">登録する</button>
-</section>
+<div id="app">
 
-<!-- ================= 追加 ================= -->
-<section id="page-add">
-  <h2>宿題追加</h2>
+  <!-- register -->
+  <section id="page-register" class="page">
+    <h1>📘 初期登録</h1>
+    <p>このLINEで宿題管理を始めます</p>
+    <button class="primary" onclick="register()">登録する</button>
+  </section>
 
-  <label>教科</label>
-  <div class="subjects">
-    <button onclick="selectSubject('国語')">国語</button>
-    <button onclick="selectSubject('数学')">数学</button>
-    <button onclick="selectSubject('理科')">理科</button>
-    <button onclick="selectSubject('社会')">社会</button>
-    <button onclick="selectSubject('英語')">英語</button>
-    <button onclick="selectSubject('音楽')">音楽</button>
-    <button onclick="selectSubject('美術')">美術</button>
-    <button onclick="selectSubject('保体')">保体</button>
-    <button onclick="selectSubject('その他')">その他</button>
-  </div>
+  <!-- add -->
+  <section id="page-add" class="page">
+    <h1>➕ 宿題追加</h1>
 
-  <input id="hwText" placeholder="宿題内容">
-  <input id="hwDate" type="date">
+    <div class="subjects">
+      <button onclick="selectSubject(this)">国語</button>
+      <button onclick="selectSubject(this)">数学</button>
+      <button onclick="selectSubject(this)">理科</button>
+      <button onclick="selectSubject(this)">社会</button>
+      <button onclick="selectSubject(this)">英語</button>
+      <button onclick="selectSubject(this)">保体</button>
+      <button onclick="selectSubject(this)">美術</button>
+      <button onclick="selectSubject(this)">音楽</button>
+      <button onclick="selectSubject(this)">その他</button>
+    </div>
 
-  <button class="primary" onclick="addHomework()">追加</button>
-</section>
+    <textarea id="text" placeholder="宿題内容"></textarea>
 
-<!-- ================= 完了 ================= -->
-<section id="page-done">
-  <h2>宿題完了</h2>
-  <div id="doneList"></div>
-  <button class="primary" onclick="doneHomework()">完了登録</button>
-</section>
+    <label class="label">期限</label>
+    <input type="date" id="date">
+
+    <button class="primary" onclick="addHomework()">追加</button>
+  </section>
+
+  <!-- done -->
+  <section id="page-done" class="page">
+    <h1>✅ 宿題完了</h1>
+    <div id="done-list"></div>
+    <button class="primary" onclick="doneHomework()">完了登録</button>
+  </section>
+
+</div>
 
 <script src="api.js"></script>
 <script src="liff.js"></script>
