@@ -1,44 +1,61 @@
 body{
-  background:#eef3ff;
-  font-family:sans-serif;
+  background:linear-gradient(135deg,#eaf2ff,#f8fbff);
   display:flex;
   justify-content:center;
   align-items:center;
-  min-height:100vh;
+  height:100vh;
+  font-family:sans-serif;
 }
 
 .card{
-  background:#fff;
+  width:340px;
   padding:20px;
   border-radius:16px;
-  width:100%;
-  max-width:420px;
-  box-shadow:0 8px 20px rgba(0,0,0,.1);
+  background:#fff;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
-
-.center{text-align:center}
 
 .menu-btn,button{
   display:block;
   width:100%;
   margin:10px 0;
-  padding:14px;
-  border-radius:12px;
-  background:#2563eb;
-  color:#fff;
+  padding:12px;
   border:none;
-  font-weight:bold;
-  text-decoration:none;
+  border-radius:12px;
+  background:#3b82f6;
+  color:#fff;
+  font-size:16px;
 }
 
 .subjects{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
+  gap:6px;
+}
+
+.subjects button{
+  background:#e0e7ff;
+  color:#1e3a8a;
 }
 
 .subjects button.active{
-  background:#06c755;
+  background:#22c55e;
+  color:#fff;
 }
+
+.toast{
+  position:fixed;
+  bottom:40px;
+  background:#22c55e;
+  color:#fff;
+  padding:10px 20px;
+  border-radius:20px;
+  opacity:0;
+  transition:.3s;
+}
+
+.toast.show{opacity:1;}
+
 
 
