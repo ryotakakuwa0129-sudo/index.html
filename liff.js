@@ -1,76 +1,76 @@
-const LIFF_ID = "2008725002-jHJsEKRx";
+const LIFF_ID = "PASTE_YOUR_LIFF_ID";
+const GAS_URL = "PASTE_YOUR_GAS_URL";
 
-let userId = "";
-let subject = "";
+let subjects = [];
 
-function getPage(){
-  return new URLSearchParams(location.search).get("page") || "add";
+async function init() {
+  await liff.init({ liffId: LIFF_ID });
+  showPage();
+  bind();
 }
 
-function showPage(){
-  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
-  document.getElementById("page-"+getPage()).style.display="block";
+function showPage() {
+  const page = new URLSearchParams(location.search).get("page") || "list";
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+
+  if (page === "list") loadList();
 }
 
-document.addEventListener("DOMContentLoaded", showPage);
+function bind() {
+  document.getElementById("registerBtn")?.addEventListener("click", register);
+  document.getElementById("addBtn")?.addEventListener("click", addHomework);
+  document.getElementById("doneBtn")?.addEventListener("click", doneHomework);
 
-async function init(){
-  await liff.init({liffId:LIFF_ID});
-  if(!liff.isLoggedIn()){
-    liff.login();
-    return;
-  }
-  userId = (await liff.getProfile()).userId;
-
-  if(getPage()==="done"){
-    loadUndone();
-  }
-}
-init();
-
-/* ===== グローバル関数（onclick用） ===== */
-
-window.selectSubject = btn=>{
-  document.querySelectorAll(".subjects button")
-    .forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-  subject = btn.textContent;
-};
-
-window.register = async ()=>{
-  await api({action:"register",userId});
-  location.href="index.html?page=add";
-};
-
-window.addHomework = async ()=>{
-  const text = document.getElementById("text").value;
-  const date = document.getElementById("date").value;
-  if(!subject||!text||!date){
-    alert("すべて入力してください");
-    return;
-  }
-  await api({action:"addHomework",subject,text,date});
-  liff.closeWindow();
-};
-
-async function loadUndone(){
-  const list = await api({action:"getUndoneHomework",userId});
-  const box = document.getElementById("done-list");
-  box.innerHTML="";
-  list.forEach(t=>{
-    const div=document.createElement("div");
-    div.className="item";
-    div.innerHTML=`<input type="checkbox" value="${t}"><span>${t}</span>`;
-    box.appendChild(div);
+  document.querySelectorAll(".subjects button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.classList.toggle("active");
+      const t = btn.textContent;
+      subjects.includes(t)
+        ? subjects = subjects.filter(x => x !== t)
+        : subjects.push(t);
+    });
   });
 }
 
-window.doneHomework = async ()=>{
-  const done=[...document.querySelectorAll("#done-list input:checked")]
-    .map(i=>i.value);
-  if(!done.length) return;
-  await api({action:"doneHomework",userId,doneList:done});
+async function register() {
+  await API.register(liff.getContext().userId);
   liff.closeWindow();
-};
+}
+
+async function addHomework() {
+  await API.addHomework(
+    subjects.join(","),
+    document.getElementById("text").value,
+    document.getElementById("date").value
+  );
+  liff.closeWindow();
+}
+
+async function loadList() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const data = await API.getUndone(liff.getContext().userId);
+  data.forEach(t => {
+    list.innerHTML += `
+      <div class="card">
+        <label>
+          <input type="checkbox" value="${t}">
+          ${t}
+        </label>
+      </div>`;
+  });
+}
+
+async function doneHomework() {
+  const checked = [...document.querySelectorAll("input:checked")]
+    .map(c => c.value);
+
+  await API.done(liff.getContext().userId, checked);
+  loadList();
+}
+
+init();
 
 
