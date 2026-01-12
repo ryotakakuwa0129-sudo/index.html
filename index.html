@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>宿題管理</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<meta charset="UTF-8">
+<title>宿題管理</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  <div id="app" class="card fade-in"></div>
-  <div id="toast" class="toast"></div>
+<div class="container">
+  <h2>📘 宿題管理</h2>
+  <a href="add.html" class="menu-btn">➕ 追加</a>
+  <a href="done.html" class="menu-btn">✅ 完了</a>
+  <a href="register.html" class="menu-btn">👤 登録</a>
+</div>
 
-  <script src="liff.js"></script>
-  <script src="api.js"></script>
+<script>
+liff.init({ liffId: "YOUR_LIFF_ID" });
+</script>
 </body>
 </html>
