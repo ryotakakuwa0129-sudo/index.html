@@ -17,10 +17,11 @@ async function post(data) {
 }
 
 async function initLiff() {
-  await liff.init({ liffId: "LIFF_ID" });
+  await liff.init({ liffId: "2008725002-jHJsEKRx" });
 }
 
-async function getUserId() {
-  const profile = await liff.getProfile();
-  return profile.userId;
+function getUserId() {
+  const context = liff.getContext();
+  return context.userId;
 }
+
