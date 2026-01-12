@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="style.css">
+
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="api.js"></script>
 </head>
@@ -17,32 +19,29 @@
 <script>
 let userId;
 
-async function init() {
+(async () => {
   await initLiff();
-  userId = await getUserId();
+  userId = getUserIdFromUrl();
 
   const list = await post({
     action: "getUndoneHomework",
-    userId: userId
+    userId
   });
 
   const box = document.getElementById("list");
-
   list.forEach(v => {
     const l = document.createElement("label");
     l.innerHTML = `<input type="checkbox" value="${v}"> ${v}`;
     box.appendChild(l);
   });
-}
-
-init();
+})();
 
 async function done() {
   const checked = [...document.querySelectorAll("input:checked")].map(x => x.value);
 
   await post({
     action: "doneHomework",
-    userId: userId,
+    userId,
     doneList: checked
   });
 
@@ -51,3 +50,4 @@ async function done() {
 </script>
 </body>
 </html>
+
