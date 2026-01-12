@@ -22,9 +22,13 @@ async function initLiff() {
 }
 
 async function getUserId() {
-  const profile = await liff.getProfile();
-  return profile.userId;
+  const idToken = liff.getDecodedIDToken();
+  if (!idToken || !idToken.sub) {
+    throw new Error("userId not available");
+  }
+  return idToken.sub;
 }
+
 
 /**
  * 登録チェック
