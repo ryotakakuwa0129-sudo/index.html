@@ -1,39 +1,31 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8">
-<link rel="stylesheet" href="style.css">
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="api.js"></script>
+  <meta charset="UTF-8">
+  <title>👤ユーザー登録</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-
 <body>
-<div class="card center">
-  <h2>👤 ユーザー登録</h2>
-  <button onclick="register()">登録する</button>
-</div>
+  <h2>初回登録</h2>
+  <button id="registerBtn">登録する</button>
 
 <script>
-(async () => {
-  await initLiff();
-  const userId = await getUserId();
+document.getElementById("registerBtn").onclick = async () => {
+  await liff.init({ liffId: "YOUR_LIFF_ID" });
+  const userId = liff.getDecodedIDToken().sub;
 
-  const registered = await checkRegistered(userId);
-  if (registered) {
-    location.href = "add.html";
-  }
-})();
-
-async function register() {
-  const userId = await getUserId();
-
-  await post({
-    action: "register",
-    userId
+  await fetch(location.origin + location.pathname, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "register",
+      userId
+    })
   });
 
-  liff.closeWindow();
-}
+  alert("登録しました");
+  location.href = "?page=add";
+};
 </script>
 </body>
 </html>
