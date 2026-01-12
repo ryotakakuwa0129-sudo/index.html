@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycby0tjXYVUWyPRwqs7r7PwJrrslfTCdZIeQmFwwT1JUfMF9N4a6XwXtgvMz-JDIzIt_mxQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycby0tjXYVUWyPRwqs7r7PwJrrslfTCdZIeQmFwwT1JUfMF9N4a6XwXtgvMz-JDIzIt_mxQ/exec"; // ← 最新のデプロイURL
 
 async function post(data) {
   const res = await fetch(GAS_URL, {
@@ -10,14 +10,17 @@ async function post(data) {
   });
 
   if (!res.ok) {
-    throw new Error("HTTP error " + res.status);
+    throw new Error("GAS error");
   }
 
   return res.json();
 }
 
+async function initLiff() {
+  await liff.init({ liffId: "LIFF_ID" });
+}
+
 async function getUserId() {
-  // LINEログインチャンネル対応
-  const idToken = liff.getDecodedIDToken();
-  return idToken.sub; // ← これが userId
+  const profile = await liff.getProfile();
+  return profile.userId;
 }
