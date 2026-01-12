@@ -1,9 +1,9 @@
-const LIFF_ID = "あなたのLIFF_ID";
-const GAS_URL = "あなたのGAS_URL";
+const LIFF_ID = "2008725002-jHJsEKRx";
+const app = document.getElementById("app");
 
-/* ---------------- LIFF初期化 ---------------- */
+/* ================= LIFF初期化 ================= */
 
-async function initLiff() {
+document.addEventListener("DOMContentLoaded", async () => {
   await liff.init({ liffId: LIFF_ID });
 
   if (!liff.isLoggedIn()) {
@@ -12,42 +12,25 @@ async function initLiff() {
   }
 
   if (!liff.isInClient()) {
-    alert("LINEアプリ内で開いてください");
-    throw new Error("Not in LINE");
+    app.innerHTML = "LINEアプリ内で開いてください";
+    return;
   }
-}
 
-/* ---------------- ユーザーID（安全版） ---------------- */
+  route();
+});
+
+/* ================= 共通 ================= */
 
 function getUserId() {
-  const ctx = liff.getContext();
-  if (!ctx || !ctx.userId) {
-    alert("userIdが取得できません");
-    throw new Error("userId missing");
-  }
-  return ctx.userId;
+  return liff.getContext().userId;
 }
 
-/* ---------------- GAS通信（絶対に止まらない） ---------------- */
-
-async function post(data) {
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-
-    const text = await res.text();
-    return JSON.parse(text);
-  } catch (e) {
-    console.error("GAS通信エラー", e);
-    alert("通信エラーが発生しました");
-    throw e;
-  }
+function show(msg) {
+  app.innerHTML = `<p class="msg">${msg}</p>`;
+  setTimeout(() => liff.closeWindow(), 1200);
 }
 
-/* ---------------- ルーティング ---------------- */
+/* ================= ページ分岐 ================= */
 
 function route() {
   const page = new URLSearchParams(location.search).get("page");
@@ -57,50 +40,48 @@ function route() {
   else renderMenu();
 }
 
-/* ---------------- 画面 ---------------- */
+/* ================= メニュー ================= */
 
 function renderMenu() {
   app.innerHTML = `
     <h2>📘 宿題管理</h2>
-    <a href="?page=add">➕ 追加</a>
-    <a href="?page=done">✅ 完了</a>
-    <a href="?page=register">👤 登録</a>
+    <a class="btn" href="?page=add">➕ 追加</a>
+    <a class="btn" href="?page=done">✅ 完了</a>
+    <a class="btn" href="?page=register">👤 登録</a>
   `;
 }
 
-/* ---------------- 登録 ---------------- */
+/* ================= 登録 ================= */
 
 function renderRegister() {
   app.innerHTML = `
     <h2>ユーザー登録</h2>
-    <button id="reg">登録</button>
+    <button class="btn" id="reg">登録</button>
   `;
 
   document.getElementById("reg").onclick = async () => {
-    const userId = getUserId();
-    await post({ action: "register", userId });
-    alert("登録完了");
-    liff.closeWindow();
+    await post({ action: "register", userId: getUserId() });
+    show("登録しました");
   };
 }
 
-/* ---------------- 宿題追加 ---------------- */
+/* ================= 宿題追加 ================= */
 
 function renderAdd() {
+  const subjects =
+    ["国語","数学","理科","社会","英語","音楽","美術","保体","その他"];
+
   app.innerHTML = `
     <h2>宿題追加</h2>
-    <div id="subjects"></div>
-    <input id="text" placeholder="内容">
+    <div class="subjects">
+      ${subjects.map(s=>`<button class="sub">${s}</button>`).join("")}
+    </div>
+    <input id="text" placeholder="宿題内容">
     <input id="date" type="date">
-    <button id="add">追加</button>
+    <button class="btn" id="add">追加</button>
   `;
 
-  const subjects = ["国語","数学","理科","社会","英語","音楽","美術","保体","その他"];
   let subject = "";
-
-  document.getElementById("subjects").innerHTML =
-    subjects.map(s=>`<button class="sub">${s}</button>`).join("");
-
   document.querySelectorAll(".sub").forEach(b=>{
     b.onclick = ()=>{
       document.querySelectorAll(".sub").forEach(x=>x.classList.remove("active"));
@@ -110,45 +91,59 @@ function renderAdd() {
   });
 
   document.getElementById("add").onclick = async () => {
-    const text = text.value;
-    const date = date.value;
-    if (!subject || !text || !date) return alert("未入力あり");
+    const text = document.getElementById("text").value;
+    const date = document.getElementById("date").value;
 
-    await post({ action:"addHomework", subject, text, date });
-    alert("追加完了");
-    liff.closeWindow();
+    if (!subject || !text || !date) {
+      alert("未入力があります");
+      return;
+    }
+
+    await post({
+      action: "addHomework",
+      subject,
+      text,
+      date
+    });
+
+    show("追加しました");
   };
 }
 
-/* ---------------- 完了登録 ---------------- */
+/* ================= 完了登録 ================= */
 
 async function renderDone() {
-  app.innerHTML = `<h2>完了登録</h2><div id="list"></div><button id="done">完了</button>`;
+  app.innerHTML = `
+    <h2>完了登録</h2>
+    <div id="list"></div>
+    <button class="btn" id="done">完了</button>
+  `;
 
-  const userId = getUserId();
-  const list = await post({ action:"getUndoneHomework", userId });
-
-  list.forEach(v=>{
-    listDiv.innerHTML += `
-      <label>
-        <input type="checkbox" value="${v}"> ${v}
-      </label><br>
-    `;
+  const list = await post({
+    action: "getUndoneHomework",
+    userId: getUserId()
   });
 
-  done.onclick = async ()=>{
-    const checked = [...document.querySelectorAll("input:checked")].map(i=>i.value);
+  const div = document.getElementById("list");
+  div.innerHTML = list.map(v=>`
+    <label class="check">
+      <input type="checkbox" value="${v}"> ${v}
+    </label>
+  `).join("");
+
+  document.getElementById("done").onclick = async () => {
+    const checked =
+      [...document.querySelectorAll("input:checked")].map(i=>i.value);
+
     if (!checked.length) return;
 
-    await post({ action:"doneHomework", userId, doneList: checked });
-    alert("完了登録しました");
-    liff.closeWindow();
+    await post({
+      action: "doneHomework",
+      userId: getUserId(),
+      doneList: checked
+    });
+
+    show("完了しました");
   };
 }
-
-/* ---------------- 起動 ---------------- */
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await initLiff();
-  route();
-});
+;
