@@ -28,7 +28,7 @@
 
 <script>
 document.getElementById("addBtn").onclick = async () => {
-  await liff.init({ liffId: "YOUR_LIFF_ID" });
+  await liff.init({ liffId: "2008725002-jHJsEKRx" });
   const userId = liff.getDecodedIDToken().sub;
 
   await fetch(location.origin + location.pathname, {
