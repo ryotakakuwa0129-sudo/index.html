@@ -9,6 +9,15 @@ async function post(data) {
 }
 
 async function getUserId() {
-  const profile = await liff.getProfile();
-  return profile.userId;
+  await liff.init({ liffId: "2008725002-jHJsEKRx" });
+
+  // context から取得
+  const userId = liff.getContext().userId;
+
+  if (!userId) {
+    console.error("ユーザーIDが取得できません");
+    alert("ユーザーIDが取得できません。LIFFをLINEアプリで開いてください。");
+    return null;
+  }
+  return userId;
 }
