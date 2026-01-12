@@ -13,9 +13,11 @@ async function post(data) {
   return res.json();
 }
 
-// ===== ユーザーID取得 =====
-async function getUserId() {
-  const profile = await liff.getProfile();
-  return profile.userId;
+function getUserId() {
+  const ctx = liff.getContext();
+  if (!ctx || !ctx.userId) {
+    alert("LINEアプリ内で開いてください");
+    throw new Error("userId not found");
+  }
+  return ctx.userId;
 }
-
