@@ -9,20 +9,22 @@ async function post(data) {
     body: JSON.stringify(data)
   });
 
+  if (!res.ok) throw new Error("GAS error");
   return res.json();
 }
 
 async function initLiff() {
-  if (!liff.isInitialized()) {
-    await liff.init({ liffId: "2008725002-jHJsEKRx" });
-  }
+  await liff.init({ liffId: "2008725002-jHJsEKRx" });
 }
 
 /**
- * FlexのURIから userId を受け取る
- * ※ getProfile は使わない
+ * ★ 修正ポイントここだけ
  */
-function getUserIdFromUrl() {
-  const params = new URLSearchParams(location.search);
-  return params.get("uid");
+function getUserId() {
+  const context = liff.getContext();
+  if (!context || !context.userId) {
+    throw new Error("userId not available");
+  }
+  return context.userId;
 }
+
