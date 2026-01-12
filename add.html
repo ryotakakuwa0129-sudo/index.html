@@ -1,63 +1,52 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8">
-<link rel="stylesheet" href="style.css">
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="api.js"></script>
+  <meta charset="UTF-8">
+  <title>宿題追加</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-
 <body>
-<div class="card">
-<h2>➕ 宿題追加</h2>
+  <h2>宿題追加</h2>
 
-<div class="subjects" id="subjects"></div>
-<textarea id="text" placeholder="宿題内容"></textarea>
-<input type="date" id="date">
+  <select id="subject">
+    <option>国語</option>
+    <option>数学</option>
+    <option>理科</option>
+    <option>社会</option>
+    <option>英語</option>
+    <option>音楽</option>
+    <option>美術</option>
+    <option>保体</option>
+    <option>その他</option>
+  </select><br><br>
 
-<button onclick="send()">登録</button>
-</div>
+  <input id="text" placeholder="宿題内容"><br><br>
+  <input id="date" type="date"><br><br>
+
+  <button id="addBtn">追加</button>
+  <button onclick="location.href='?page=done'">完了チェックへ</button>
 
 <script>
-const SUBJECTS = ["国語","数学","理科","社会","英語","音楽","美術","保体","その他"];
-let subject = null;
+document.getElementById("addBtn").onclick = async () => {
+  await liff.init({ liffId: "YOUR_LIFF_ID" });
+  const userId = liff.getDecodedIDToken().sub;
 
-(async () => {
-  await initLiff();
-  const userId = await getUserId();
-
-  const registered = await checkRegistered(userId);
-  if (!registered) {
-    location.href = "register.html";
-  }
-})();
-
-const box = document.getElementById("subjects");
-
-SUBJECTS.forEach(s => {
-  const b = document.createElement("button");
-  b.innerText = s;
-  b.onclick = () => {
-    document.querySelectorAll(".subjects button").forEach(x => x.classList.remove("active"));
-    b.classList.add("active");
-    subject = s;
-  };
-  box.appendChild(b);
-});
-
-async function send() {
-  if (!subject || !text.value || !date.value) return;
-
-  await post({
-    action: "addHomework",
-    subject,
-    text: text.value,
-    date: date.value
+  await fetch(location.origin + location.pathname, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "addHomework",
+      userId,
+      subject: subject.value,
+      text: text.value,
+      date: date.value
+    })
   });
 
-  liff.closeWindow();
-}
+  alert("追加しました");
+};
 </script>
 </body>
 </html>
+
 
