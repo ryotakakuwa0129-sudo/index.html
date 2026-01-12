@@ -2,9 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="style.css">
-
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="api.js"></script>
 </head>
@@ -12,47 +10,21 @@
 <body>
 <div class="card center">
   <h2>👤 ユーザー登録</h2>
-  <p id="status">確認中...</p>
-  <button id="btn" style="display:none;">登録する</button>
+  <button onclick="register()">登録する</button>
 </div>
 
 <script>
-(async () => {
+async function register() {
   await initLiff();
+  const userId = await getUserId();
 
-  const userId = getUserIdFromUrl();
-  if (!userId) {
-    document.getElementById("status").innerText = "ユーザー情報を取得できません";
-    return;
-  }
-
-  const res = await post({
-    action: "checkUser",
-    userId
+  await post({
+    action: "register",
+    userId: userId
   });
 
-  if (res.registered) {
-    document.getElementById("status").innerText = "すでに登録されています";
-    setTimeout(() => liff.closeWindow(), 1200);
-    return;
-  }
-
-  document.getElementById("status").innerText = "未登録です";
-  const btn = document.getElementById("btn");
-  btn.style.display = "block";
-
-  btn.onclick = async () => {
-    btn.disabled = true;
-    btn.innerText = "登録中...";
-
-    await post({
-      action: "register",
-      userId
-    });
-
-    liff.closeWindow();
-  };
-})();
+  liff.closeWindow();
+}
 </script>
 </body>
 </html>
