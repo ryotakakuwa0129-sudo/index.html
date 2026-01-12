@@ -14,13 +14,22 @@
 </div>
 
 <script>
-async function register() {
+(async () => {
   await initLiff();
+  const userId = await getUserId();
+
+  const registered = await checkRegistered(userId);
+  if (registered) {
+    location.href = "add.html";
+  }
+})();
+
+async function register() {
   const userId = await getUserId();
 
   await post({
     action: "register",
-    userId: userId
+    userId
   });
 
   liff.closeWindow();
