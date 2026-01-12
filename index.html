@@ -1,41 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>宿題管理</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="style.css">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
+
 <body>
-  <p>読み込み中...</p>
+<div class="card center">
+  <h1>📘 宿題管理</h1>
+
+  <a class="menu-btn" href="register.html">👤 ユーザー登録</a>
+  <a class="menu-btn" href="add.html">➕ 宿題追加</a>
+  <a class="menu-btn" href="done.html">✅ 完了登録</a>
+</div>
 
 <script>
-(async () => {
-  await liff.init({ liffId: "2008725002-jHJsEKRx" });
-
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
-
-  const userId = liff.getDecodedIDToken().sub;
-
-  const res = await fetch(location.origin + location.pathname, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "checkUser",
-      userId
-    })
-  });
-
-  const data = await res.json();
-
-  if (data.registered) {
-    location.href = "?page=add";
-  } else {
-    location.href = "?page=register";
-  }
-})();
+liff.init({ liffId: "2008725002-jHJsEKRx" });
 </script>
 </body>
 </html>
