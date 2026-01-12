@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <link rel="stylesheet" href="style.css">
@@ -20,32 +20,39 @@
 </div>
 
 <script>
-const SUBJECTS=["国語","数学","理科","社会","英語","音楽","美術","保体","その他"];
-let subject=null;
+const SUBJECTS = ["国語","数学","理科","社会","英語","音楽","美術","保体","その他"];
+let subject = null;
 
-liff.init({ liffId:"LIFF_ID" });
-const box=document.getElementById("subjects");
+(async () => {
+  await initLiff();
+})();
 
-SUBJECTS.forEach(s=>{
-  const b=document.createElement("button");
-  b.innerText=s;
-  b.onclick=()=>{
-    document.querySelectorAll(".subjects button").forEach(x=>x.classList.remove("active"));
+const box = document.getElementById("subjects");
+
+SUBJECTS.forEach(s => {
+  const b = document.createElement("button");
+  b.innerText = s;
+  b.onclick = () => {
+    document.querySelectorAll(".subjects button").forEach(x => x.classList.remove("active"));
     b.classList.add("active");
-    subject=s;
+    subject = s;
   };
   box.appendChild(b);
 });
 
-async function send(){
+async function send() {
+  if (!subject || !text.value || !date.value) return;
+
   await post({
-    action:"addHomework",
-    subject,
+    action: "addHomework",
+    subject: subject,
     text: text.value,
     date: date.value
   });
+
   liff.closeWindow();
 }
 </script>
 </body>
 </html>
+
