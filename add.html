@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="style.css">
+
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="api.js"></script>
 </head>
@@ -45,9 +47,9 @@ async function send() {
 
   await post({
     action: "addHomework",
-    subject: subject,
+    subject,
     text: text.value,
-    date: date.value
+    date: date.value   // ← YYYY-MM-DD（GAS側で整形）
   });
 
   liff.closeWindow();
