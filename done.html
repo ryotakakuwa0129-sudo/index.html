@@ -1,65 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>宿題完了</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="style.css">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="api.js"></script>
 </head>
+
 <body>
-  <h2>未完了宿題</h2>
-  <div id="list"></div>
-  <button id="doneBtn">完了にする</button>
+<div class="card">
+<h2>✅ 完了登録</h2>
+<div id="status">読み込み中…</div>
+<div id="list"></div>
+<button id="doneBtn" onclick="done()">完了</button>
+</div>
 
 <script>
-let undone = [];
+let userId;
 
-(async () => {
-  await liff.init({ liffId: "2008725002-jHJsEKRx" });
-  const userId = liff.getDecodedIDToken().sub;
+async function init(){
+  await liff.init({ liffId:"2008725002-jHJsEKRx" });
+  const profile = await liff.getProfile();
+  userId = profile.userId;
 
-  const res = await fetch(location.origin + location.pathname, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "getUndoneHomework",
-      userId
-    })
+  const res = await post({ action:"checkUser", userId });
+  const statusEl = document.getElementById("status");
+  const doneBtn = document.getElementById("doneBtn");
+
+  if(!res.registered){
+    statusEl.innerHTML = "⚠️ 未登録です。<br>登録ページに移動します…";
+    doneBtn.disabled = true;
+    setTimeout(()=>location.href="register.html", 1500);
+    return;
+  } else {
+    statusEl.innerText = "✅ 登録済み";
+  }
+
+  const list = await post({action:"getUndoneHomework", userId});
+  const box = document.getElementById("list");
+
+  list.forEach(v=>{
+    const l=document.createElement("label");
+    l.innerHTML=`<input type="checkbox" value="${v}"> ${v}`;
+    box.appendChild(l);
   });
+}
 
-  undone = await res.json();
+async function done(){
+  const checked=[...document.querySelectorAll("input:checked")].map(x=>x.value);
+  if(!checked.length) return alert("完了項目を選択してください");
+  await post({action:"doneHomework", userId, doneList:checked});
+  alert("完了登録しました");
+  liff.closeWindow();
+}
 
-  const list = document.getElementById("list");
-  undone.forEach((t, i) => {
-    list.innerHTML += `
-      <label>
-        <input type="checkbox" value="${t}">
-        ${t}
-      </label><br>
-    `;
-  });
-})();
-
-document.getElementById("doneBtn").onclick = async () => {
-  const checked = [...document.querySelectorAll("input:checked")]
-    .map(c => c.value);
-
-  const userId = liff.getDecodedIDToken().sub;
-
-  await fetch(location.origin + location.pathname, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "doneHomework",
-      userId,
-      doneList: checked
-    })
-  });
-
-  alert("完了しました");
-  location.reload();
-};
+init();
 </script>
 </body>
 </html>
-
-
