@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <link rel="stylesheet" href="style.css">
@@ -15,9 +15,14 @@
 
 <script>
 async function register() {
-  await liff.init({ liffId: "LIFF_ID" });
+  await initLiff();
   const userId = await getUserId();
-  await post({ action: "register", userId });
+
+  await post({
+    action: "register",
+    userId: userId
+  });
+
   liff.closeWindow();
 }
 </script>
