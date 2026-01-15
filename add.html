@@ -57,7 +57,7 @@ async function init(){
 }
 
 async function send(){
-  if(!subject || !text.value) return alert("教科と内容を入力してください");
+  if(!subject || !text.value) return alert("教科と宿題内容を全て入力してください");
   await post({
     action:"addHomework",
     subject,
