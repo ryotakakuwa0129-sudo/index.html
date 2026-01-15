@@ -37,7 +37,7 @@ async function init(){
     statusEl.innerText = "✅ 登録済み";
     sendBtn.disabled = false;
   } else {
-    statusEl.innerHTML = "⚠️ 未登録です。<br>登録ページに移動します…";
+    statusEl.innerHTML = "⚠️ 未登録です。<br>登録ページに移動します";
     sendBtn.disabled = true;
     setTimeout(()=>location.href="register.html", 1500);
     return;
